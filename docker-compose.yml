@@ -1,0 +1,33 @@
+# ============================================
+# Versior AI 电台 - Docker Compose
+# 一键部署: docker compose up -d
+# 查看日志: docker compose logs -f
+# 停止:     docker compose down
+# ============================================
+
+version: '3.8'
+
+services:
+  versior-radio:
+    image: versior/versior:latest
+    container_name: versior-radio
+    ports:
+      - "7734:8834"
+    volumes:
+      - ./data/.env:/app/backend/.env
+      - ./data/user-music-prefs.json:/app/backend/src/user-music-prefs.json
+      - ./data/logs:/app/logs
+    environment:
+      - NODE_ENV=production
+      - PORT=8834
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8834/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

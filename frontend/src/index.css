@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.font-pixel {
+  font-family: 'VT323', monospace !important;
+  letter-spacing: 0.08em;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  background-color: #111116;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* Halo breathing light effect */
+.halo-container {
+  position: relative;
+  z-index: 0;
+}
+
+.halo-container::before {
+  content: "";
+  position: absolute;
+  inset: -30px;
+  background: radial-gradient(ellipse at 30% 50%, rgba(46, 228, 166, 0.15) 0%, transparent 50%),
+              radial-gradient(ellipse at 70% 50%, rgba(168, 85, 247, 0.12) 0%, transparent 50%);
+  animation: halo-breathe 4s ease-in-out infinite alternate;
+  z-index: -1;
+  border-radius: 40px;
+  pointer-events: none;
+}
+
+@keyframes halo-breathe {
+  0% { opacity: 0.3; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1.02); }
+}
+
+/* Smooth scrollbar for internal scrolling */
+.custom-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #333 transparent;
+}
+
+.custom-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+  background-color: #333;
+  border-radius: 2px;
+}

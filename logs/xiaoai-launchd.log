@@ -1,0 +1,52 @@
+[dotenv@17.3.1] injecting env (5) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+🔌 正在连接小爱音箱...
+✅ 小爱音箱连接成功
+🎤 开始监听消息...
+📡 LLM 接口: http://localhost:8834/api/chat
+🔑 触发词: "请"
+[dotenv@17.3.1] injecting env (5) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+🔌 正在连接小爱音箱...
+✅ 小爱音箱连接成功
+🎤 开始监听消息...
+📡 LLM 接口: http://localhost:8834/api/chat
+🔑 触发词: "请"
+[dotenv@17.3.1] injecting env (5) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+🔌 正在连接小爱音箱...
+✅ 小爱音箱连接成功
+🎤 开始监听消息...
+📡 LLM 接口: http://localhost:8834/api/chat
+🔑 触发词: "请"
+[dotenv@17.3.1] injecting env (5) from .env -- tip: ⚡️ secrets for agents: https://dotenvx.com/as2
+🔌 正在连接小爱音箱...
+✅ 小爱音箱连接成功
+🎤 开始监听消息...
+📡 LLM 接口: http://localhost:8834/api/chat
+🔑 触发词: "请"
+[dotenv@17.3.1] injecting env (5) from .env -- tip: 🛡️ auth for agents: https://vestauth.com
+🔌 正在连接小爱音箱...
+✅ 小爱音箱连接成功
+🎤 开始监听消息...
+📡 LLM 接口: http://localhost:8834/api/chat
+🔑 触发词: "请"
+⏱️ 轮询间隔: 1000ms
+📋 首次轮询：标记 16 条历史消息为已处理
+[dotenv@17.3.1] injecting env (5) from .env -- tip: ⚙️  override existing env vars with { override: true }
+🔌 正在连接小爱音箱...
+✅ 小爱音箱连接成功
+🎤 开始监听消息...
+📡 LLM 接口: http://localhost:8834/api/chat
+🔑 触发词: "请"
+⏱️ 轮询间隔: 1000ms
+📋 首次轮询：标记 16 条历史消息为已处理
+🎤 收到指令: 查询顺德的天气
+🧠 LLM 回复: 顺德今天晴，19°C，东风14km/h，湿度30%，体感舒适。
+✅ 已播报
+🎤 收到指令: 告诉我你现在是什么模型
+🧠 LLM 回复: 我是 Versior，赛博朋克风格的音乐 AI 助手。
+✅ 已播报
+🎤 收到指令: 告诉我顺德的天气
+🧠 LLM 回复: 顺德今天晴，19°C，体感19°C，湿度30%，东东北风14km/h，天气舒适宜人。
+✅ 已播报
+🎤 收到指令: 告诉我明天顺德的天气
+🧠 LLM 回复: 明天顺德预计晴转多云，20-26°C，湿度40%，东北风10km/h。天气舒适，适合外出。
+✅ 已播报
