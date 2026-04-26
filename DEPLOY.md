@@ -1,30 +1,53 @@
 # Versior AI 电台 - 部署指南
 
-> 镜像地址：`versior/versior:latest`
-> 端口：`8834`（前端 + API + WebSocket 单端口）
+> 镜像地址：`versior/ai:latest`
+> 端口：`7734`（前端 + API + WebSocket 单端口）
 
 ---
 
 ## 前置要求
 
 - 安装 [Docker](https://docs.docker.com/get-docker/) 和 Docker Compose
-- 开放 `8834` 端口（或自定义端口）
+- 开放 `7734` 端口（或自定义端口）
 
 ---
 
-## 一键部署（推荐）
+## 一键部署
 
-### 1. 拉取镜像
+### 1. 创建项目目录
 
 ```bash
-docker pull versior/versior:latest
+mkdir -p /opt/versior-radio/data/logs
+cd /opt/versior-radio
 ```
 
-### 2. 创建项目目录
+### 2. 创建 docker-compose.yml
 
-```bash
-mkdir -p /opt/versior-radio/data
-cd /opt/versior-radio
+```yaml
+services:
+  versior-radio:
+    image: versior/ai:latest
+    container_name: versior-radio
+    ports:
+      - "7734:8834"
+    volumes:
+      - ./data/.env:/app/backend/.env
+      - ./data/user-music-prefs.json:/app/backend/src/user-music-prefs.json
+      - ./data/logs:/app/logs
+    environment:
+      - NODE_ENV=production
+      - PORT=8834
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8834/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 ```
 
 ### 3. 创建配置文件
@@ -47,63 +70,18 @@ MUSIC_SOURCE=netease
 ### 4. 启动
 
 ```bash
+docker compose pull
 docker compose up -d
 ```
 
 ### 5. 验证
 
 ```bash
-# 查看日志
 docker compose logs -f
-
-# 健康检查
-curl http://localhost:8834/health
+curl http://localhost:7734
 ```
 
-访问 `http://服务器IP:8834` 即可使用。
-
----
-
-## 纯 Docker 命令（不用 compose）
-
-```bash
-docker run -d \
-  --name versior-radio \
-  -p 8834:8834 \
-  -e NODE_ENV=production \
-  -e PORT=8834 \
-  -e ADMIN_PASSWORD=你的管理员密码 \
-  -e LONGCAT_API_KEY=你的API Key \
-  -e LONGCAT_API_URL=https://api.longcat.chat/openai/v1/chat/completions \
-  -e LONGCAT_MODEL=LongCat-Flash-Lite \
-  -e MUSIC_API_URL=http://iwenwiki.com:3000 \
-  -e MUSIC_SOURCE=netease \
-  -v $(pwd)/data/.env:/app/backend/.env \
-  -v $(pwd)/data/user-music-prefs.json:/app/backend/src/user-music-prefs.json \
-  --restart unless-stopped \
-  versior/versior:latest
-```
-
----
-
-## nginx 反向代理（公网部署）
-
-```nginx
-server {
-    listen 80;
-    server_name radio.yourdomain.com;
-
-    location / {
-        proxy_pass http://127.0.0.1:8834;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_read_timeout 86400;
-    }
-}
-```
+访问 `http://服务器IP:7734` 即可使用。
 
 ---
 
@@ -115,7 +93,7 @@ server {
 | 停止 | `docker compose down` |
 | 重启 | `docker compose restart` |
 | 查看日志 | `docker compose logs -f` |
-| 更新镜像 | `docker pull versior/versior:latest && docker compose up -d` |
+| 更新镜像 | `docker compose pull && docker compose up -d` |
 | 进入容器 | `docker exec -it versior-radio sh` |
 
 ---
@@ -137,7 +115,7 @@ server {
 docker compose logs
 
 # 端口被占用
-lsof -i :8834
+ss -tlnp | grep 7734
 
 # 健康检查失败
 docker exec versior-radio wget -q -O- http://localhost:8834/health

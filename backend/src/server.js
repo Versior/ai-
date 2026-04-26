@@ -140,7 +140,7 @@ class RadioServer {
                                 envContent = [
                                     'NODE_ENV=production',
                                     'PORT=8834',
-                                    'ADMIN_PASSWORD=versior123',
+                                    'ADMIN_PASSWORD=' + (process.env.ADMIN_PASSWORD || 'change_me'),
                                     'LONGCAT_API_KEY=',
                                     'LONGCAT_API_URL=https://api.longcat.chat/openai/v1/chat/completions',
                                     'LONGCAT_MODEL=LongCat-Flash-Lite',

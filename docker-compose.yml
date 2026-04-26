@@ -5,11 +5,9 @@
 # 停止:     docker compose down
 # ============================================
 
-version: '3.8'
-
 services:
   versior-radio:
-    image: versior/versior:latest
+    image: versior/ai:latest
     container_name: versior-radio
     ports:
       - "7734:8834"
