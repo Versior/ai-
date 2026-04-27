@@ -451,9 +451,24 @@ class RadioServer {
                 } catch (e) { console.error('❌ WS 消息解析错误:', e.message); }
             });
 
+            ws.lastActive = Date.now();
             ws.on('close', () => { this.clients.delete(ws); console.log(`🔌 断开: ${clientIP}`); });
             ws.on('error', (e) => { console.error('❌ WS 错误:', e.message); this.clients.delete(ws); });
         });
+
+        // ============================================================
+        // 心跳检测：每 60 秒检查一次死连接
+        // ============================================
+        setInterval(() => {
+            const now = Date.now();
+            for (const client of this.clients) {
+                if (client.lastActive && now - client.lastActive > 120000) {
+                    console.log('💀 清理死连接');
+                    try { client.terminate(); } catch (e) {}
+                    this.clients.delete(client);
+                }
+            }
+        }, 60000);
 
         // ============================================================
         // 启动
@@ -470,7 +485,11 @@ class RadioServer {
     // WebSocket 消息处理
     // ============================================================
     async handleWSMessage(ws, data, clientIP) {
+        ws.lastActive = Date.now();
         switch (data.type) {
+            case 'ping':
+                try { ws.send(JSON.stringify({ type: 'pong' })); } catch (e) {}
+                return;
             case 'user_input':
                 await this.processUserInput(data.text, clientIP);
                 break;

@@ -8,7 +8,7 @@ import {
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.0.35';
+const APP_VERSION = '1.0.36';
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -149,6 +149,7 @@ export default function App() {
     let ws;
     let reconnectTimer = null;
     let reconnectAttempts = 0;
+    let pingInterval = null;
     const MAX_RECONNECT = 10;
     const connect = () => {
       try {
@@ -162,6 +163,13 @@ export default function App() {
             ws.send(JSON.stringify({ type: 'command', action: 'next_track' }));
             setSystemMessage('Versior 正在为你挑选第一首...');
           }
+          // 心跳：每 30 秒发送一次 ping
+          if (pingInterval) clearInterval(pingInterval);
+          pingInterval = setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ type: 'ping' }));
+            }
+          }, 30000);
         };
         ws.onmessage = (event) => {
           try {
@@ -178,6 +186,8 @@ export default function App() {
               if (data.weather) { console.log('🌤️ 收到天气:', JSON.stringify(data.weather)); setWeather(data.weather); }
             } else if (data.type === 'weather_update') {
               setWeather(data.weather);
+            } else if (data.type === 'pong') {
+              // 心跳响应，忽略
             } else if (data.type === 'preload_ready') {
               setPreloadStatus('ready');
               preloadedTrackRef.current = data.track || null;
@@ -189,6 +199,7 @@ export default function App() {
         };
         ws.onclose = () => {
           setWsConnected(false);
+          if (pingInterval) { clearInterval(pingInterval); pingInterval = null; }
           if (reconnectAttempts < MAX_RECONNECT) {
             const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
             reconnectTimer = setTimeout(() => { reconnectAttempts++; connect(); }, delay);
@@ -198,7 +209,7 @@ export default function App() {
       } catch (e) { console.warn('WS error:', e); }
     };
     connect();
-    return () => { clearTimeout(reconnectTimer); if (ws && ws.readyState === 1) ws.close(); };
+    return () => { clearTimeout(reconnectTimer); if (pingInterval) clearInterval(pingInterval); if (ws && ws.readyState === 1) ws.close(); };
   }, []);
 
   // === 播放核心 ===
