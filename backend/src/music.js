@@ -943,20 +943,20 @@ class MusicService {
         // 获取播放链接
         let songUrl = '';
         try {
-            const urlRes = await axios.get(`${apiUrl}/song/url/v1`, { params: { id: songId, level: 'standard' }, timeout: 10000 });
+            const urlRes = await axios.post(`${apiUrl}/song/url/v1`, `id=${songId}&level=standard`, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 10000 });
             songUrl = urlRes.data?.data?.[0]?.url || '';
         } catch (e) {}
         if (!songUrl) throw new Error('无播放链接');
         // 获取详情
         let detail = song;
         try {
-            const detailRes = await axios.get(`${apiUrl}/song/detail`, { params: { ids: songId }, timeout: 10000 });
+            const detailRes = await axios.post(`${apiUrl}/song/detail`, `ids=${songId}`, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 10000 });
             detail = detailRes.data?.songs?.[0] || song;
         } catch (e) {}
         // 获取热评
         let hotComment = '';
         try {
-            const commentRes = await axios.get(`${apiUrl}/comment/hot`, { params: { id: songId, type: 0, limit: 1 }, timeout: 5000 });
+            const commentRes = await axios.post(`${apiUrl}/comment/hot`, `id=${songId}&type=0&limit=1`, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 5000 });
             const hotComments = commentRes.data?.hotComments;
             if (hotComments?.length > 0) {
                 hotComment = hotComments[0].content || '';
