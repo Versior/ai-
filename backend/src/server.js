@@ -414,25 +414,7 @@ class RadioServer {
                     res.writeHead(500); res.end(JSON.stringify({ success: false, error: e.message }));
                 }
                 return;
-            }
 
-            // 小爱音箱 LLM 接口
-            if (req.url === '/api/chat' && req.method === 'POST') {
-                let body = '';
-                req.on('data', chunk => body += chunk);
-                req.on('end', async () => {
-                    try {
-                        const data = JSON.parse(body);
-                        const weather = await weatherService.getWeather('127.0.0.1');
-                        const weatherDesc = weatherService.getWeatherDesc(weather);
-                        const llmResponse = await llmService.generateResponse(data.text || '', weatherDesc);
-                        res.writeHead(200, { 'Content-Type': 'application/json' });
-                        res.end(JSON.stringify(llmResponse));
-                    } catch (e) {
-                        res.writeHead(500); res.end(JSON.stringify({ error: e.message }));
-                    }
-                });
-                return;
             }
 
             // 获取网站标题

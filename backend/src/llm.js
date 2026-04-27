@@ -273,46 +273,6 @@ class LLMService {
         }
     }
 
-    async generateXiaoaiResponse(userInput = "", weatherDesc = "") {
-        const xiaoaiPrompt = `你是 Versior，赛博朋克风格的 AI 音乐助手。
-规则：
-1. 必须全程中文，回复简短口语化，控制在50字以内
-2. 返回严格 JSON 格式：{"say": "回复", "track": null}
-3. 问天气/时间等问题直接简短回答
-4. 想听歌时推荐一首，一句话介绍
-5. 不要长章大论，不要自成介绍，直接回答`;
-
-        const userMessage = weatherDesc
-          ? weatherDesc + '\n\n用户说："' + userInput + '"\n请简短回答（50字以内）。'
-          : '用户说："' + userInput + '"\n请简短回答（50字以内）。';
-
-        try {
-            const response = await axios.post(
-                this.apiUrl,
-                {
-                    model: this.model,
-                    messages: [
-                        { role: "system", content: xiaoaiPrompt },
-                        { role: "user", content: userMessage }
-                    ],
-                    temperature: 0.7,
-                    max_tokens: 150
-                },
-                {
-                    headers: { 'Authorization': `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' },
-                    timeout: 15000
-                }
-            );
-            const respContent = response.data.choices[0].message.content.trim();
-            const parsed = this.extractJSON(respContent);
-            if (parsed) {
-                return { say: parsed.say || respContent, track: null };
-            }
-            return { say: respContent.substring(0, 100), track: null };
-        } catch (e) {
-            return { say: "信号不太好，稍后再试。", track: null };
-        }
-    }
 }
 
 module.exports = new LLMService();
