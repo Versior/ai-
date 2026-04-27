@@ -1,5 +1,10 @@
 # 📋 Versior AI 电台 - 更新日志
 
+## v1.0.19 (2026-04-27)
+- 🔧 恢复：NeteaseCloudMusicApi 代理容器（最优方案）
+- 🔧 修复：搜索优先用代理 API，失败回退歌单随机选
+- 🔧 修复：docker-compose 恢复 netease-api 服务
+
 ## v1.0.18 (2026-04-27)
 - 🔧 修复：完全去掉 NeteaseCloudMusicApi 代理容器依赖
 - 🔧 修复：搜索/播放链接/详情/热评全部改用 POST 官方 API（只需 Cookie）
