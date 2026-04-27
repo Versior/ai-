@@ -15,9 +15,15 @@
 #   仅构建不推送 (导出到本地):
 #     docker buildx build --platform linux/amd64,linux/arm64 \
 #       -t versior/ai:latest --load .
+#
+# 注意: 如果 Docker Hub 网络不通，可替换基础镜像为:
+#   docker.1ms.run/library/node:20-alpine
 # ============================================
 
-FROM --platform=$BUILDPLATFORM node:20-alpine AS builder
+FROM --platform=$BUILDPLATFORM docker.1ms.run/library/node:20-alpine AS builder
+
+# 安装编译原生依赖所需的工具（sqlite3 需要 Python + make + g++）
+RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
@@ -34,7 +40,10 @@ RUN cd frontend && npm run build
 # ============================================
 # 生产镜像
 # ============================================
-FROM node:20-alpine
+FROM docker.1ms.run/library/node:20-alpine
+
+# 安装运行时原生依赖所需的工具
+RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
