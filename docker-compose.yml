@@ -10,19 +10,12 @@
 #   docker buildx create --use --name multiarch 2>/dev/null || true
 #   docker buildx build --platform linux/amd64,linux/arm64 \
 #     -t versior/ai:latest --push .
+#
+# 注意：netease-api 代理容器需要单独启动：
+#   docker run -d --name netease-api -p 9934:3000 --restart unless-stopped binaryify/netease_cloud_music_api:latest
 # ============================================
 
 services:
-  # 网易云音乐 API 代理（搜索/播放链接/详情/热评）
-  netease-api:
-    image: binaryify/netease_cloud_music_api:latest
-    container_name: netease-api
-    ports:
-      - "9934:3000"
-    environment:
-      - NODE_ENV=production
-    restart: unless-stopped
-
   versior-radio:
     image: versior/ai:latest
     container_name: versior-radio
@@ -36,9 +29,6 @@ services:
       - NODE_ENV=production
       - PORT=8834
       - MUSIC_API_URL=http://netease-api:3000
-    depends_on:
-      netease-api:
-        condition: service_started
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8834/health || exit 1"]
