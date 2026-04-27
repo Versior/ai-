@@ -743,7 +743,7 @@ class MusicService {
                 );
                 const proxySongs = proxyRes.data?.result?.songs;
                 if (proxySongs && proxySongs.length > 0) {
-                    console.log(`  ✅ 代理搜索成功: ${proxySongs.length} 首`);
+                    console.log(`  代理搜索原始结果: ${JSON.stringify(proxySongs.slice(0,3).map(s => ({ id: s.id, name: s.name, artist: s.ar?.[0]?.name })))}`);
                     for (const song of proxySongs.slice(0, 3)) {
                         try {
                             return await this._buildTrackInfoFromProxy(song, apiUrl);
