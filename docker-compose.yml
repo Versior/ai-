@@ -15,7 +15,7 @@
 services:
   # 网易云音乐 API 代理（搜索/播放链接/详情/热评）
   netease-api:
-    image: binaryify/netease-cloud-music-api:latest
+    image: binaryify/netease_cloud_music_api:latest
     container_name: netease-api
     ports:
       - "3000:3000"
