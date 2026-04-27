@@ -1,5 +1,8 @@
 # 📋 Versior AI 电台 - 更新日志
 
+## v1.0.22 (2026-04-27)
+- 🔧 修复：搜索方法 this.netease 防御性检查 + 调试日志
+
 ## v1.0.21 (2026-04-27)
 - 🔧 修复：搜索接口改用 POST（NeteaseCloudMusicApi /search 只支持 POST）
 
