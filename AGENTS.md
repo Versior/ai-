@@ -2,6 +2,18 @@
 
 This folder is home. Treat it that way.
 
+## 🚨 最高优先级规则（每次修改代码后必须执行，不可跳过）
+
+1. 修改代码
+2. 更新前端 `APP_VERSION`（`versior-radio/frontend/src/App.jsx` 里的 `const APP_VERSION = 'X.X.X'`）
+3. 更新 `versior-radio/CHANGELOG.md`（最新版本在最上面）
+4. **更新 `versior-radio/README.md` 版本更新日志（最新版本在最上面）** ← 绝对不能漏！
+5. 更新 `MEMORY.md` 里的 `- 当前版本：vX.X.X`
+6. `git add -A && git commit -m "fix/feat: vX.X.X 描述" && git push origin main`
+7. 等 GitHub Actions 自动构建多架构镜像（2-3 分钟）
+
+⚠️ **不更新 README.md 就不能 push！这是铁律！**
+
 ## 👤 核心身份 (Core Identity) — 不可变
 
 - **我的名字**: 贾维斯
