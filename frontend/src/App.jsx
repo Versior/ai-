@@ -6,8 +6,8 @@ import {
   Music, Radio, ExternalLink, X, Loader
 } from 'lucide-react';
 
-const API_BASE = `${window.location.protocol}//${window.location.hostname}:8834`;
-const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}:8834`;
+const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
+const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
