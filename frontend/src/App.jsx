@@ -8,7 +8,7 @@ import {
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.0.29';
+const APP_VERSION = '1.0.30';
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -745,12 +745,27 @@ export default function App() {
 
             {/* 天气 */}
             {weather && (
-              <div className={`px-6 py-3 ${isDark ? 'bg-[#0f0f13]' : 'bg-gray-50'} border-b ${brd}`}>
-                <div className="flex items-center justify-between">
+              <div className={`px-6 py-3 ${isDark ? 'bg-[#0a0a0f]' : 'bg-gray-50'} border-b ${brd} relative overflow-hidden`}>
+                {/* 赛博朋克网格背景 */}
+                {isDark && <div className="absolute inset-0 opacity-5" style={{backgroundImage: 'linear-gradient(rgba(46,228,166,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(46,228,166,0.3) 1px, transparent 1px)', backgroundSize: '20px 20px'}} />}
+                <div className="flex items-center justify-between relative z-10">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-[#2ee4a6]/10 flex items-center justify-center">{getWeatherIcon(weather.condition)}</div>
-                    <div><p className={`text-xs font-bold ${t1}`}>{weather.city} {weather.condition} {weather.temp}</p><p className="text-[10px] text-gray-500">体感 {weather.feelsLike} · {weather.humidity} · {weather.wind}</p></div>
+                    <div className={`w-9 h-9 rounded-md ${isDark ? 'bg-[#2ee4a6]/10 border border-[#2ee4a6]/20' : 'bg-gray-200'} flex items-center justify-center shadow-[0_0_8px_rgba(46,228,166,0.15)]`}>{getWeatherIcon(weather.condition)}</div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className={`text-xs font-bold ${isDark ? 'text-[#2ee4a6]' : t1} tracking-wide`}>{weather.city}</p>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${isDark ? 'bg-[#2ee4a6]/10 text-[#2ee4a6]/70' : 'bg-gray-200 text-gray-500'} font-mono`}>{weather.temp}</span>
+                      </div>
+                      <p className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-500'} font-mono mt-0.5`}>
+                        <span className={isDark ? 'text-[#2ee4a6]/50' : ''}>体感 {weather.feelsLike}</span>
+                        <span className="mx-1.5 opacity-30">│</span>
+                        <span className={isDark ? 'text-[#2ee4a6]/50' : ''}>{weather.humidity}</span>
+                        <span className="mx-1.5 opacity-30">│</span>
+                        <span className={isDark ? 'text-[#2ee4a6]/50' : ''}>{weather.wind}</span>
+                      </p>
+                    </div>
                   </div>
+                  {isDark && <div className="text-[9px] text-[#2ee4a6]/30 font-mono tracking-widest uppercase">weather.sys</div>}
                 </div>
               </div>
             )}
@@ -823,11 +838,12 @@ export default function App() {
 
             {/* 热评区域 */}
             {currentTrack.hotComment && (
-              <div className={`px-6 py-4 ${isDark ? 'bg-[#0d0d10]' : 'bg-gray-50'} border-t ${brd}`}>
+              <div className={`px-6 py-4 ${isDark ? 'bg-[#0d0d10]' : 'bg-gray-50'} border-t ${brd} relative`}>
+                {isDark && <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#2ee4a6]/20 to-transparent" />}
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[10px] text-gray-500 tracking-widest uppercase">💬 热评</span>
+                  <span className={`text-[10px] ${isDark ? 'text-[#2ee4a6]/70' : 'text-gray-500'} tracking-[0.2em] uppercase font-mono`}>💬 hot_comment</span>
                 </div>
-                <p className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-700'} leading-relaxed`}>{currentTrack.hotComment}</p>
+                <p className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-700'} leading-relaxed ${isDark ? 'font-light' : ''}`}>{currentTrack.hotComment}</p>
               </div>
             )}
 
