@@ -8,7 +8,7 @@ import {
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.0.50';
+const APP_VERSION = '1.0.51';
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -249,7 +249,7 @@ export default function App() {
   const handleQueueClick = useCallback(async (track) => {
     if (track.url) {
       doPlayTrack(track);
-      setSystemMessage('正在生成推荐语...');
+      setSystemMessage('正在生成推荐...');
       try {
         const res = await fetch(API_BASE + '/api/ai-summary?title=' + encodeURIComponent(track.title) + '&artist=' + encodeURIComponent(track.artist || ''));
         const data = await res.json();
@@ -264,7 +264,7 @@ export default function App() {
       const data = await res.json();
       if (data.success && data.track && data.track.url) {
         doPlayTrack(data.track);
-        setSystemMessage('正在生成推荐语...');
+        setSystemMessage('正在生成推荐...');
         try {
           const aiRes = await fetch(API_BASE + '/api/ai-summary?title=' + encodeURIComponent(data.track.title) + '&artist=' + encodeURIComponent(data.track.artist || ''));
           const aiData = await aiRes.json();
