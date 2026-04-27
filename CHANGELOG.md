@@ -147,3 +147,7 @@
 - 🔧 修复：热评接口从 weapi 改为 api 路径（weapi 需要加密参数）
 - 🔧 修复：删除 PlatformService 旧 searchSong，修复 is not a function
 - 🧹 清理：移除调试日志
+
+## v1.0.43 (2026-04-27)
+- 🔧 修复：解析歌曲（播放链接/详情/热评）优先用代理，备选官方 API
+- 🔧 修复：搜索用官方 API，不用代理（代理 /search 返回错误结果）
