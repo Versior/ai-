@@ -8,7 +8,7 @@ import {
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.0.33';
+const APP_VERSION = '1.0.34';
 
 export default function App() {
   const [theme, setTheme] = useState('dark');

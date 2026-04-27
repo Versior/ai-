@@ -75,10 +75,17 @@ class PlatformService {
                 timeout: 15000
             });
             if (res.data?.code === 200 && res.data.profile) {
-                const setCookie = res.headers['set-cookie'] || [];
-                console.log('  DEBUG set-cookie:', JSON.stringify(setCookie));
-                const cookieStr = setCookie.map(c => c.split(';')[0]).join('; ');
-                console.log('  DEBUG cookieStr:', cookieStr.substring(0, 80));
+                // 优先从响应体获取 cookie（网易云 API 返回 cookie 字段）
+                let cookieStr = '';
+                if (res.data.cookie) {
+                    cookieStr = res.data.cookie;
+                    console.log('  DEBUG cookie from body:', cookieStr.substring(0, 80));
+                } else {
+                    // 回退：从 set-cookie 头提取
+                    const setCookie = res.headers['set-cookie'] || [];
+                    cookieStr = setCookie.map(c => c.split(';')[0]).join('; ');
+                    console.log('  DEBUG cookie from header:', cookieStr.substring(0, 80));
+                }
                 const uid = res.data.profile.userId || res.data.account?.id || 0;
                 return { success: true, cookie: cookieStr, nickname: res.data.profile.nickname || '', uid };
             }
@@ -735,7 +742,7 @@ class MusicService {
         // 登录成功：更新对应平台的 cookie
         if (result.success && result.cookie) {
             svc.cookie = result.cookie;
-            console.log(`✅ ${platform} 登录成功: ${result.nickname}`);
+            console.log(`✅ ${platform} 登录成功: ${result.nickname}, cookie_len=${result.cookie.length}, cookie_prefix=${result.cookie.substring(0,50)}`);
         }
         return result;
     }
@@ -1106,18 +1113,8 @@ class MusicService {
      * 获取歌曲播放链接
      */
     async getSongUrl(songId) {
-        const apiUrl = process.env.MUSIC_API_URL || '';
         const cookie = (this.netease && this.netease.cookie) || process.env.NETEASE_COOKIE || process.env.NMTID || '';
-        // 优先：代理 API
-        if (apiUrl) {
-            try {
-                const res = await axios.get(`${apiUrl}/song/url/v1`, { params: { id: songId, level: 'standard' }, timeout: 8000 });
-                const proxyUrl = res.data?.data?.[0]?.url;
-                if (proxyUrl) return proxyUrl.replace('http://', 'https://');
-                console.log(`  getSongUrl 代理返回 null, code=${res.data?.code}`);
-            } catch (e) { console.log(`  getSongUrl 代理失败: ${e.message}`); }
-        }
-        // 回退：直接 POST 官方 API
+        // 直接调官方 API 获取播放链接（代理的 /song/url/v1 不支持用户 Cookie 认证）
         if (cookie) {
             try {
                 const res = await axios.post('https://music.163.com/api/song/enhance/player/url',
@@ -1126,7 +1123,7 @@ class MusicService {
                 );
                 const url = res.data?.data?.[0]?.url;
                 if (url) return url.replace('http://', 'https://');
-                console.log(`  getSongUrl 官方API返回 null, code=${res.data?.code}`);
+                console.log(`  getSongUrl 官方API返回 null, code=${res.data?.code}, cookie=${cookie.substring(0,30)}...`);
             } catch (e) { console.log(`  getSongUrl 官方API失败: ${e.message}`); }
         } else {
             console.log('  getSongUrl cookie 为空');
