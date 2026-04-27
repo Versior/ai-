@@ -8,7 +8,7 @@ import {
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.0.46';
+const APP_VERSION = '1.0.47';
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -106,8 +106,10 @@ export default function App() {
   // === 首次弹窗 ===
   useEffect(() => {
     const dismissed = localStorage.getItem('versior_intro_dismissed');
-    if (dismissed) setShowIntro(false);
-    else setShowIntro(true);
+    if (dismissed) {
+      setShowIntro(false);
+      userInteractedRef.current = true;
+    } else setShowIntro(true);
     // 刷新音乐登录状态
     refreshMusicStatus();
   }, [refreshMusicStatus]);
@@ -159,7 +161,7 @@ export default function App() {
           setWsConnected(true);
           reconnectAttempts = 0;
           refreshMusicStatus();
-          if (userInteractedRef.current && !audioRef.current?.src) {
+          if (!audioRef.current?.src) {
             ws.send(JSON.stringify({ type: 'command', action: 'next_track' }));
             setSystemMessage('Versior 正在为你挑选第一首...');
           }
