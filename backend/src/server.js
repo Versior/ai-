@@ -268,7 +268,7 @@ class RadioServer {
                                     }
                                     fs.writeFileSync(envPath, envContent.trim() + '\n');
                                     process.env[key] = result.cookie;
-                                    console.log(`  ✅ Cookie 已保存到 .env`);
+                                    console.log(`  ✅ Cookie 已保存到 .env (${result.cookie.substring(0, 30)}...)`);
                                 } catch (e) { console.warn('⚠️ 保存 Cookie 失败:', e.message); }
                             }
                             try {

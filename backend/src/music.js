@@ -941,6 +941,7 @@ class MusicService {
     async _buildTrackInfoFromProxy(song, apiUrl) {
         const songId = song.id;
         const cookie = (this.netease && this.netease.cookie) || process.env.NETEASE_COOKIE || process.env.NMTID || '';
+        console.log(`  _buildTrackInfoFromProxy: cookie=${cookie ? cookie.substring(0,30)+'...' : 'EMPTY'} apiUrl=${apiUrl}`);
         // 获取播放链接（直接调官方 API，代理的 /song/url/v1 需要特定 Cookie 格式）
         let songUrl = '';
         if (cookie) {
@@ -1109,8 +1110,10 @@ class MusicService {
         if (apiUrl) {
             try {
                 const res = await axios.get(`${apiUrl}/song/url/v1`, { params: { id: songId, level: 'standard' }, timeout: 8000 });
-                if (res.data?.data?.[0]?.url) return res.data.data[0].url.replace('http://', 'https://');
-            } catch (e) {}
+                const proxyUrl = res.data?.data?.[0]?.url;
+                if (proxyUrl) return proxyUrl.replace('http://', 'https://');
+                console.log(`  getSongUrl 代理返回 null, code=${res.data?.code}`);
+            } catch (e) { console.log(`  getSongUrl 代理失败: ${e.message}`); }
         }
         // 回退：直接 POST 官方 API
         if (cookie) {
@@ -1121,7 +1124,10 @@ class MusicService {
                 );
                 const url = res.data?.data?.[0]?.url;
                 if (url) return url.replace('http://', 'https://');
-            } catch (e) {}
+                console.log(`  getSongUrl 官方API返回 null, code=${res.data?.code}`);
+            } catch (e) { console.log(`  getSongUrl 官方API失败: ${e.message}`); }
+        } else {
+            console.log('  getSongUrl cookie 为空');
         }
         return null;
     }
