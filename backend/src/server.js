@@ -26,7 +26,16 @@ function setCORS(res) {
 const STATIC_DIR = path.join(__dirname, '..', '..', 'frontend', 'dist');
 
 function serveStatic(req, res) {
+    // 只处理 GET 请求，POST 等其他请求返回 405
+    if (req.method !== 'GET') {
+        res.writeHead(405);
+        res.end('Method Not Allowed');
+        return;
+    }
     let filePath = req.url === '/' ? '/index.html' : req.url;
+    // 去掉 query string
+    const qIdx = filePath.indexOf('?');
+    if (qIdx !== -1) filePath = filePath.slice(0, qIdx);
     // 安全过滤：防止目录遍历
     filePath = path.normalize(filePath).replace(/^(\.\.(\/|\\|$))+/, '');
     const fullPath = path.join(STATIC_DIR, filePath);
@@ -79,9 +88,11 @@ class RadioServer {
             if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
 
             // ===== API 路由 =====
+            // 去掉 query string 用于路由匹配
+            const reqPath = req.url.includes('?') ? req.url.slice(0, req.url.indexOf('?')) : req.url;
 
             // 健康检查
-            if (req.url === '/health') {
+            if (reqPath === '/health') {
                 const status = { status: 'ok', clients: this.clients.size, llm: null, music: null };
                 try {
                     const llmRes = await axios.post(
@@ -102,7 +113,7 @@ class RadioServer {
             }
 
             // 修改密码（需要旧密码）
-            if (req.url === '/api/change-password' && req.method === 'POST') {
+            if (reqPath === '/api/change-password' && req.method === 'POST') {
                 let body = '';
                 req.on('data', chunk => body += chunk);
                 req.on('end', async () => {
@@ -149,7 +160,7 @@ class RadioServer {
             }
 
             // 配置读取（无需密码）
-            if (req.url === '/api/config' && req.method === 'GET') {
+            if (reqPath === '/api/config' && req.method === 'GET') {
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({
                     success: true,
@@ -164,7 +175,7 @@ class RadioServer {
             }
 
             // 配置保存（需要密码）
-            if (req.url === '/api/config' && req.method === 'POST') {
+            if (reqPath === '/api/config' && req.method === 'POST') {
                 let body = '';
                 req.on('data', chunk => body += chunk);
                 req.on('end', async () => {
@@ -222,7 +233,7 @@ class RadioServer {
             }
 
             // 音乐平台登录
-            if (req.url === '/api/music/login' && req.method === 'POST') {
+            if (reqPath === '/api/music/login' && req.method === 'POST') {
                 let body = '';
                 req.on('data', chunk => body += chunk);
                 req.on('end', async () => {
@@ -260,7 +271,7 @@ class RadioServer {
             }
 
             // 音乐状态
-            if (req.url === '/api/music/status' && req.method === 'GET') {
+            if (reqPath === '/api/music/status' && req.method === 'GET') {
                 try {
                     const platforms = ['netease', 'kuwo', 'qqmusic', 'kugou'];
                     const status = {};
@@ -279,7 +290,7 @@ class RadioServer {
             }
 
             // 刷新用户数据
-            if (req.url === '/api/music/refresh-data' && req.method === 'POST') {
+            if (reqPath === '/api/music/refresh-data' && req.method === 'POST') {
                 let body = '';
                 req.on('data', chunk => body += chunk);
                 req.on('end', async () => {

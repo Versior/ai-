@@ -17,7 +17,7 @@ services:
     image: versior/ai:latest
     container_name: versior-radio
     ports:
-      - "7734:8834"
+      - "8834:8834"
     volumes:
       - ./data/.env:/app/backend/.env
       - ./data/user-music-prefs.json:/app/backend/src/user-music-prefs.json
