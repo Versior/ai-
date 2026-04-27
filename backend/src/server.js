@@ -307,6 +307,19 @@ class RadioServer {
                 return;
             }
 
+            // HTTP 方式获取下一首（WS 断开时的降级方案）
+            if (reqPath === '/api/next' && req.method === 'POST') {
+                if (!this.isProcessing) {
+                    this.isProcessing = true;
+                    this.processNextTrack(req.socket.remoteAddress || '127.0.0.1').finally(() => {
+                        this.isProcessing = false;
+                    });
+                }
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: true, message: '正在获取下一首...' }));
+                return;
+            }
+
             // 搜索歌曲
             if (req.url.startsWith('/api/search') && req.method === 'GET') {
                 try {

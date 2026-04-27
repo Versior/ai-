@@ -144,44 +144,56 @@ export default function App() {
   // === WebSocket ===
   useEffect(() => {
     let ws;
-    try {
-      ws = new WebSocket(WS_URL);
-      wsRef.current = ws;
-      ws.onopen = () => {
-        setWsConnected(true);
-        // WS 连接后自动刷新音乐登录状态
-        refreshMusicStatus();
-        // 如果用户已关闭弹窗且没有歌曲在播放，主动请求第一首
-        if (userInteractedRef.current && !audioRef.current?.src) {
-          ws.send(JSON.stringify({ type: 'command', action: 'next_track' }));
-          setSystemMessage('Versior 正在为你挑选第一首...');
-        }
-      };
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === 'dj_broadcast') {
-            if (data.say) setSystemMessage(data.say);
-            if (data.track) doPlayTrack(data.track);
-            if (data.queue) setQueue(data.queue);
-          } else if (data.type === 'dj_response') {
-            if (data.say) setSystemMessage(data.say);
-            if (data.queue) setQueue(data.queue);
-            if (data.track) doPlayTrack(data.track);
-          } else if (data.type === 'weather_update') {
-            setWeather(data.weather);
-          } else if (data.type === 'preload_ready') {
-            setPreloadStatus('ready');
-            preloadedTrackRef.current = data.track || null;
-            preloadedSayRef.current = data.say || '';
-            preloadedQueueRef.current = data.queue || [];
-            setTimeout(() => setPreloadStatus(''), 3000);
+    let reconnectTimer = null;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT = 10;
+    const connect = () => {
+      try {
+        ws = new WebSocket(WS_URL);
+        wsRef.current = ws;
+        ws.onopen = () => {
+          setWsConnected(true);
+          reconnectAttempts = 0;
+          refreshMusicStatus();
+          if (userInteractedRef.current && !audioRef.current?.src) {
+            ws.send(JSON.stringify({ type: 'command', action: 'next_track' }));
+            setSystemMessage('Versior 正在为你挑选第一首...');
           }
-        } catch (e) { console.error('WS parse error', e); }
-      };
-      ws.onclose = () => setWsConnected(false);
-    } catch (e) { console.warn('WS error:', e); }
-    return () => { if (ws && ws.readyState === 1) ws.close(); };
+        };
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'dj_broadcast') {
+              if (data.say) setSystemMessage(data.say);
+              if (data.track) doPlayTrack(data.track);
+              if (data.queue) setQueue(data.queue);
+            } else if (data.type === 'dj_response') {
+              if (data.say) setSystemMessage(data.say);
+              if (data.queue) setQueue(data.queue);
+              if (data.track) doPlayTrack(data.track);
+            } else if (data.type === 'weather_update') {
+              setWeather(data.weather);
+            } else if (data.type === 'preload_ready') {
+              setPreloadStatus('ready');
+              preloadedTrackRef.current = data.track || null;
+              preloadedSayRef.current = data.say || '';
+              preloadedQueueRef.current = data.queue || [];
+              setTimeout(() => setPreloadStatus(''), 3000);
+            }
+          } catch (e) { console.error('WS parse error', e); }
+        };
+        ws.onclose = () => {
+          setWsConnected(false);
+          if (reconnectAttempts < MAX_RECONNECT) {
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+            reconnectTimer = setTimeout(() => { reconnectAttempts++; connect(); }, delay);
+          }
+        };
+        ws.onerror = () => { try { ws.close(); } catch(e) {} };
+      } catch (e) { console.warn('WS error:', e); }
+    };
+    connect();
+    return () => { clearTimeout(reconnectTimer); if (ws && ws.readyState === 1) ws.close(); };
   }, []);
 
   // === 播放核心 ===
@@ -310,7 +322,6 @@ export default function App() {
       preloadedSayRef.current = '';
       preloadedQueueRef.current = [];
       preloadSentRef.current = false;
-      // 触发新的预加载
       if (wsRef.current && wsConnected) {
         wsRef.current.send(JSON.stringify({ type: 'command', action: 'preload_next' }));
         preloadSentRef.current = true;
@@ -325,6 +336,18 @@ export default function App() {
       if (audioRef.current) {
         try { audioRef.current.pause(); } catch(e) {}
       }
+    } else {
+      // WS 断开，用 HTTP 请求下一首
+      setSystemMessage('正在获取下一首...');
+      setIsPlaying(false);
+      fetch(`${WS_URL.replace('ws://', 'http://').replace('wss://', 'https://')}/api/next`, { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+          if (d.track) doPlayTrack(d.track);
+          if (d.say) setSystemMessage(d.say);
+          if (d.queue) setQueue(d.queue);
+        })
+        .catch(() => setSystemMessage('网络异常，请稍后重试'));
     }
   };
 
