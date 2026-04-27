@@ -1,5 +1,8 @@
 # 📋 Versior AI 电台 - 更新日志
 
+## v1.0.29 (2026-04-27)
+- 🔧 修复：_buildTrackInfoFromProxy 请求携带 Cookie（播放链接/详情/热评）
+
 ## v1.0.28 (2026-04-27)
 - 🔧 修复：MUSIC_API_URL 改为 localhost:9934（Linux 不支持 host.docker.internal）
 - 🔧 修复：versior-radio 改为 network_mode: host
