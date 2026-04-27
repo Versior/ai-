@@ -916,8 +916,6 @@ class MusicService {
             default: return null;
         }
     }
-}
-
     /**
      * 从用户歌单中随机选一首能播放的歌曲
      */
