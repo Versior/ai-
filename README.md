@@ -80,7 +80,7 @@ docker pull binaryify/netease_cloud_music_api:latest
 # 启动代理容器
 docker run -d \
   --name netease-api \
-  -p 3000:3000 \
+  -p 9934:3000 \
   --restart unless-stopped \
   binaryify/netease_cloud_music_api:latest
 

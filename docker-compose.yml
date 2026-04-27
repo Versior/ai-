@@ -18,7 +18,7 @@ services:
     image: binaryify/netease_cloud_music_api:latest
     container_name: netease-api
     ports:
-      - "3000:3000"
+      - "9934:3000"
     environment:
       - NODE_ENV=production
     restart: unless-stopped
