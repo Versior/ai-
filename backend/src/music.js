@@ -542,23 +542,31 @@ class PlatformService {
     async searchSong(songName) {
         try {
             console.log(`🔍 搜索歌曲: ${songName}`);
-            // 使用 weapi 加密搜索
+            // 优先用代理 API（NeteaseCloudMusicApi），回退到 weapi 加密
+            const apiUrl = process.env.MUSIC_API_URL || '';
+            if (apiUrl) {
+                try {
+                    const proxyRes = await axios.get(`${apiUrl}/search`, {
+                        params: { keywords: songName, limit: 3 },
+                        timeout: 10000
+                    });
+                    const proxySongs = proxyRes.data?.result?.songs;
+                    if (proxySongs && proxySongs.length > 0) {
+                        console.log(`  ✅ 代理搜索成功: ${proxySongs.length} 首`);
+                        return this._parseSearchResult(proxySongs[0], apiUrl);
+                    }
+                } catch (proxyErr) {
+                    console.log(`  ⚠️ 代理搜索失败: ${proxyErr.message}，回退 weapi`);
+                }
+            }
+            // 回退：weapi 加密搜索
             const searchParams = weapiEncrypt({
-                s: songName,
-                limit: 3,
-                type: 1,
-                offset: 0,
-                csrf_token: ''
+                s: songName, limit: 3, type: 1, offset: 0, csrf_token: ''
             });
-            const searchResponse = await axios.post(`${this.baseUrl}/weapi/search/get`, 
+            const searchResponse = await axios.post(`${this.baseUrl}/weapi/search/get`,
                 `params=${encodeURIComponent(searchParams.params)}&encSecKey=${encodeURIComponent(searchParams.encSecKey)}`,
                 {
-                    headers: {
-                        ...this.getHeaders(),
-                        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'Referer': 'https://music.163.com'
-                    },
+                    headers: { ...this.getHeaders(), 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', 'Content-Type': 'application/x-www-form-urlencoded', 'Referer': 'https://music.163.com' },
                     timeout: 15000
                 }
             );

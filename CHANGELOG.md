@@ -1,5 +1,10 @@
 # 📋 Versior AI 电台 - 更新日志
 
+## v1.0.14 (2026-04-27)
+- 🔧 修复：搜索优先用 NeteaseCloudMusicApi 代理容器，回退 weapi 加密
+- 🔧 修复：docker-compose 新增 netease-api 代理容器
+- 🔧 修复：前端 WS 天气消息加日志
+
 ## v1.0.13 (2026-04-27)
 - 🔧 修复：网易云搜索/播放链接/详情/热评全部改为 weapi 加密接口
 - 🔧 修复：AES-128-CBC + RSA 加密实现，不再依赖第三方代理

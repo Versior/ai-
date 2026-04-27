@@ -13,6 +13,21 @@
 # ============================================
 
 services:
+  # 网易云音乐 API 代理（搜索/播放链接/详情/热评）
+  netease-api:
+    image: binaryify/netease-cloud-music-api:latest
+    container_name: netease-api
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   versior-radio:
     image: versior/ai:latest
     container_name: versior-radio
@@ -25,6 +40,10 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=8834
+      - MUSIC_API_URL=http://netease-api:3000
+    depends_on:
+      netease-api:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8834/health"]

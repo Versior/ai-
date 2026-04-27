@@ -8,7 +8,7 @@ import {
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.0.13';
+const APP_VERSION = '1.0.14';
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -168,12 +168,12 @@ export default function App() {
               if (data.say) setSystemMessage(data.say);
               if (data.track) doPlayTrack(data.track);
               if (data.queue) setQueue(data.queue);
-              if (data.weather) setWeather(data.weather);
+              if (data.weather) { console.log('🌤️ 收到天气:', JSON.stringify(data.weather)); setWeather(data.weather); }
             } else if (data.type === 'dj_response') {
               if (data.say) setSystemMessage(data.say);
               if (data.queue) setQueue(data.queue);
               if (data.track) doPlayTrack(data.track);
-              if (data.weather) setWeather(data.weather);
+              if (data.weather) { console.log('🌤️ 收到天气:', JSON.stringify(data.weather)); setWeather(data.weather); }
             } else if (data.type === 'weather_update') {
               setWeather(data.weather);
             } else if (data.type === 'preload_ready') {

@@ -523,6 +523,7 @@ class RadioServer {
             this.lastSay = llmResponse.say;
 
             console.log('📡 广播天气:', weather ? `${weather.city} ${weather.condition} ${weather.temp}` : '无天气');
+            console.log('📡 广播天气对象:', JSON.stringify(weather));
             this.broadcast({
                 type: 'dj_broadcast',
                 say: llmResponse.say,
