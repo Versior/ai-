@@ -15,7 +15,7 @@ class LLMService {
 规则：
 1. 全程中文回复
 2. 每次回复必须是严格JSON格式，不要包含任何JSON以外的文字
-3. JSON格式：{"say":"短播报词（20-40字），包含：①为什么推荐这首歌 ②歌曲风格特点，不要描述天气","track":{"title":"歌曲名","artist":"歌手"},"queue":[{"title":"预告歌曲1","artist":"歌手"},{"title":"预告歌曲2","artist":"歌手"}]}
+3. JSON格式：{"say":"短播报词（20-40字），包含：①为什么推荐这首歌 ②歌曲风格特点，不要描述天气","track":{"title":"歌曲名","artist":"歌手"},"queue":[{"title":"预告歌曲1","artist":"歌手"},{"title":"预告歌曲2","artist":"歌手"},{"title":"预告歌曲3","artist":"歌手"},{"title":"预告歌曲4","artist":"歌手"},{"title":"预告歌曲5","artist":"歌手"}]}
 4. 根据用户的音乐品味画像推荐歌曲，优先从用户收藏列表中选择，也可以推荐列表中不存在但风格相似的歌手和歌曲
 5. 推荐时要考虑用户偏好的语种、风格、歌手类型，推荐相似风格的歌曲
 6. 用户指定风格时必须严格遵守，所有推荐必须风格一致，这是最高优先级规则
@@ -165,7 +165,7 @@ class LLMService {
             return q;
         });
         
-        // 确保 queue 有 2 首，不足时从偏好列表补充
+        // 确保 queue 有至少 3 首，不足时从偏好列表补充
         while (queue.length < 3 && this.userTracks.length > 0) {
             const randomTrack = this.userTracks[Math.floor(Math.random() * this.userTracks.length)];
             queue.push({ title: randomTrack.name, artist: randomTrack.artist });
