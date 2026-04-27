@@ -104,7 +104,7 @@ class RadioServer {
                 } catch (e) { status.llm = false; }
                 try {
                     const apiUrl = process.env.MUSIC_API_URL || '';
-                    const musicRes = await axios.get(`${apiUrl}/search?keywords=test&limit=1`, { timeout: 8000 });
+                    const musicRes = await axios.get(`${apiUrl}/cloudsearch?keywords=test&limit=1`, { timeout: 8000 });
                     status.music = (musicRes.status >= 200 && musicRes.status < 500);
                 } catch (e) { status.music = false; }
                 res.writeHead(200, { 'Content-Type': 'application/json' });

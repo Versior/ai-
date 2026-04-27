@@ -548,7 +548,7 @@ class PlatformService {
             // 优先：NeteaseCloudMusicApi 代理
             if (apiUrl) {
                 try {
-                    const proxyRes = await axios.get(`${apiUrl}/search`, {
+                    const proxyRes = await axios.get(`${apiUrl}/cloudsearch`, {
                         params: { keywords: songName, limit: 5 },
                         timeout: 10000
                     });

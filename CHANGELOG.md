@@ -1,5 +1,8 @@
 # 📋 Versior AI 电台 - 更新日志
 
+## v1.0.20 (2026-04-27)
+- 🔧 修复：搜索接口路径 /search -> /cloudsearch（NeteaseCloudMusicApi 正确接口）
+
 ## v1.0.19 (2026-04-27)
 - 🔧 恢复：NeteaseCloudMusicApi 代理容器（最优方案）
 - 🔧 修复：搜索优先用代理 API，失败回退歌单随机选
