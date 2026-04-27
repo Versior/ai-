@@ -252,7 +252,7 @@ class RadioServer {
                         }
                         if (result.success) {
                             result.loggedIn = true;
-                            console.log(`✅ ${platform} 登录成功: ${result.nickname}`);
+                            console.log(`✅ ${platform} 登录成功: ${result.nickname}, cookie: ${result.cookie ? result.cookie.substring(0,50) + '...' : 'EMPTY'}`);
                             // 持久化 Cookie 到 .env
                             if (result.cookie) {
                                 try {
@@ -267,7 +267,6 @@ class RadioServer {
                                         envContent += `\n${key}=${result.cookie}`;
                                     }
                                     fs.writeFileSync(envPath, envContent.trim() + '\n');
-                                    process.env[key] = result.cookie;
                                     console.log(`  ✅ Cookie 已保存到 .env (${result.cookie.substring(0, 30)}...)`);
                                 } catch (e) { console.warn('⚠️ 保存 Cookie 失败:', e.message); }
                             }

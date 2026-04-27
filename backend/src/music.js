@@ -76,7 +76,9 @@ class PlatformService {
             });
             if (res.data?.code === 200 && res.data.profile) {
                 const setCookie = res.headers['set-cookie'] || [];
+                console.log('  DEBUG set-cookie:', JSON.stringify(setCookie));
                 const cookieStr = setCookie.map(c => c.split(';')[0]).join('; ');
+                console.log('  DEBUG cookieStr:', cookieStr.substring(0, 80));
                 const uid = res.data.profile.userId || res.data.account?.id || 0;
                 return { success: true, cookie: cookieStr, nickname: res.data.profile.nickname || '', uid };
             }
