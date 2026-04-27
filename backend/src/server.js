@@ -5,7 +5,7 @@ const fs = require('fs');
 const axios = require('axios');
 const dotenv = require('dotenv');
 
-dotenv.config({ path: path.join(__dirname, '..', '.env') });
+dotenv.config({ path: path.join(__dirname, '..', '.env'), override: false });
 
 const llmService = require('./llm');
 const musicService = require('./music');

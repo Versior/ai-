@@ -1,5 +1,8 @@
 # 📋 Versior AI 电台 - 更新日志
 
+## v1.0.27 (2026-04-27)
+- 🔧 修复：dotenv 改为 override: false，防止 .env 覆盖 docker-compose 环境变量
+
 ## v1.0.26 (2026-04-27)
 - 🔧 修复：登录成功后 Cookie 持久化到 .env 文件
 - 🔧 修复：getSongUrl/pickRandomFromLibrary 优先用 this.netease.cookie
