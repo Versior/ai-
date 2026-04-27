@@ -8,7 +8,7 @@ import {
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.0.44';
+const APP_VERSION = '1.0.46';
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -227,11 +227,7 @@ export default function App() {
         playPromise.then(() => setIsPlaying(true)).catch(() => {});
       }
     }
-    if (wsRef.current && wsConnected && !preloadSentRef.current) {
-      preloadSentRef.current = true;
-      wsRef.current.send(JSON.stringify({ type: 'command', action: 'preload_next' }));
-      console.log('📤 已发送 preload_next');
-    }
+    // 不在这里发 preload_next，播放到 80% 时自动触发
   }, [wsConnected]);
 
   // === 播放列表点击：搜索→播放，不发 user_input 避免重复 ===
@@ -311,9 +307,13 @@ export default function App() {
       if (dur && !isDraggingRef.current) {
         setProgress((current / dur) * 100);
       }
-      // 播放到 80% 后，允许新的预加载
-      if (dur && current / dur > 0.8) {
-        preloadSentRef.current = false;
+      // 播放到 80% 后，主动请求预加载下一首
+      if (dur && current / dur > 0.8 && !preloadSentRef.current) {
+        preloadSentRef.current = true;
+        if (wsRef.current && wsConnected) {
+          wsRef.current.send(JSON.stringify({ type: 'command', action: 'preload_next' }));
+          console.log('📤 播放80%，请求预加载下一首');
+        }
       }
     }
   };
@@ -369,11 +369,15 @@ export default function App() {
       setQueue(preloadedQueueRef.current);
       preloadedSayRef.current = '';
       preloadedQueueRef.current = [];
+      // 切歌后立即预加载下一首
       preloadSentRef.current = false;
-      if (wsRef.current && wsConnected) {
-        wsRef.current.send(JSON.stringify({ type: 'command', action: 'preload_next' }));
-        preloadSentRef.current = true;
-      }
+      setTimeout(() => {
+        if (wsRef.current && wsConnected) {
+          wsRef.current.send(JSON.stringify({ type: 'command', action: 'preload_next' }));
+          preloadSentRef.current = true;
+          console.log('📤 切歌后预加载下一首');
+        }
+      }, 1000);
       return;
     }
     // 没有预加载，走原来的流程
