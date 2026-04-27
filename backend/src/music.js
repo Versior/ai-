@@ -543,7 +543,7 @@ class PlatformService {
         try {
             console.log(`🔍 搜索歌曲: ${songName}`);
             const apiUrl = process.env.MUSIC_API_URL || '';
-            const cookie = (this.netease && this.netease.cookie) || process.env.NETEASE_COOKIE || process.env.NMTID || '';
+            const cookie = process.env.NETEASE_COOKIE || process.env.NMTID || '';
 
             // 优先：NeteaseCloudMusicApi 代理
             if (apiUrl) {
@@ -1063,7 +1063,7 @@ class MusicService {
     async pickRandomFromLibrary() {
         try {
             const fs = require('fs');
-            const cookie = (this.netease && this.netease.cookie) || process.env.NETEASE_COOKIE || process.env.NMTID || '';
+            const cookie = process.env.NETEASE_COOKIE || process.env.NMTID || '';
             const prefsPath = path.join(__dirname, 'user-music-prefs.json');
             if (!fs.existsSync(prefsPath)) return null;
             const tracks = JSON.parse(fs.readFileSync(prefsPath, 'utf8'));
@@ -1087,7 +1087,7 @@ class MusicService {
      */
     async getSongUrl(songId) {
         const apiUrl = process.env.MUSIC_API_URL || '';
-        const cookie = (this.netease && this.netease.cookie) || process.env.NETEASE_COOKIE || process.env.NMTID || '';
+        const cookie = process.env.NETEASE_COOKIE || process.env.NMTID || '';
         // 优先：代理 API
         if (apiUrl) {
             try {

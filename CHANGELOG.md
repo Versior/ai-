@@ -1,5 +1,8 @@
 # 📋 Versior AI 电台 - 更新日志
 
+## v1.0.23 (2026-04-27)
+- 🔧 修复：去掉 this.netease.cookie 依赖，改用环境变量 NETEASE_COOKIE / NMTID
+
 ## v1.0.22 (2026-04-27)
 - 🔧 修复：搜索方法 this.netease 防御性检查 + 调试日志
 
