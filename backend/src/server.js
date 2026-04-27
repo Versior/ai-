@@ -251,6 +251,7 @@ class RadioServer {
                             result = await musicService.login(platform, username, password);
                         }
                         if (result.success) {
+                            result.loggedIn = true;
                             console.log(`📋 正在获取 ${platform} 用户 ${result.nickname} 的音乐数据...`);
                             try {
                                 const uniqueTracks = await musicService.fetchUserData(platform, result.uid);

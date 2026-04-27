@@ -601,9 +601,9 @@ export default function App() {
                       <div className="grid grid-cols-2 gap-2">
                         {[{ k: 'netease', l: '网易云' }, { k: 'kuwo', l: '酷我' }, { k: 'qqmusic', l: 'QQ音乐' }, { k: 'kugou', l: '酷狗' }].map(p => (
                           <div key={p.k} className="flex items-center gap-1.5">
-                            <span className={`w-1.5 h-1.5 rounded-full ${musicLoginStatus[p.k]?.loggedIn ? 'bg-[#2ee4a6]' : 'bg-gray-600'}`} />
+                            <span className={`w-1.5 h-1.5 rounded-full ${musicLoginStatus[p.k]?.success ? 'bg-[#2ee4a6]' : 'bg-gray-600'}`} />
                             <span className="text-[9px] text-gray-400">{p.l}</span>
-                            {musicLoginStatus[p.k]?.loggedIn && <span className="text-[8px] text-[#2ee4a6]">✓</span>}
+                            {musicLoginStatus[p.k]?.success && <span className="text-[8px] text-[#2ee4a6]">✓</span>}
                           </div>
                         ))}
                       </div>
@@ -611,13 +611,13 @@ export default function App() {
                     </div>
 
                     {/* 推荐歌曲 */}
-                    {Object.values(musicLoginStatus).some(s => s?.loggedIn) && (
+                    {Object.values(musicLoginStatus).some(s => s?.success) && (
                       <div className="bg-[#2ee4a6]/5 border border-[#2ee4a6]/20 rounded-lg p-3 space-y-2">
                         <div className="flex items-center justify-between">
                           <h4 className="text-[10px] text-[#2ee4a6] uppercase tracking-wider font-bold">🎵 基于你的偏好推荐</h4>
                           <span className="text-[9px] text-gray-500">{Object.values(musicLoginStatus).reduce((sum, s) => sum + (s?.trackCount || 0), 0)} 首歌曲</span>
                         </div>
-                        <p className="text-[9px] text-gray-400 leading-relaxed">已登录 {Object.entries(musicLoginStatus).filter(([_, s]) => s?.loggedIn).map(([p, s]) => s.nickname || p).join('、')}，AI 会从你的歌单中挑选推荐曲目。</p>
+                        <p className="text-[9px] text-gray-400 leading-relaxed">已登录 {Object.entries(musicLoginStatus).filter(([_, s]) => s?.success).map(([p, s]) => s.nickname || p).join('、')}，AI 会从你的歌单中挑选推荐曲目。</p>
                         <button onClick={() => { if (wsRef.current && wsConnected) { wsRef.current.send(JSON.stringify({ type: 'user_input', text: '根据我的歌单推荐一首歌' })); } }} className="w-full text-[10px] font-bold py-1.5 rounded-lg bg-[#2ee4a6]/10 text-[#2ee4a6] hover:bg-[#2ee4a6]/20 transition-colors">🎲 换一批推荐</button>
                       </div>
                     )}
@@ -655,11 +655,11 @@ export default function App() {
                     )}
                     {musicLoginStatus[selectedPlatform] && (
                       <div className={`text-xs ${musicLoginStatus[selectedPlatform].loggedIn ? 'text-[#2ee4a6]' : 'text-red-400'}`}>
-                        {musicLoginStatus[selectedPlatform].loggedIn ? `✓ 已登录 ${musicLoginStatus[selectedPlatform].nickname || ''}，获取了 ${musicLoginStatus[selectedPlatform].trackCount || 0} 首歌曲` : `✗ ${musicLoginStatus[selectedPlatform].error || '登录失败'}`}
+                        {musicLoginStatus[selectedPlatform].success ? `✓ 已登录 ${musicLoginStatus[selectedPlatform].nickname || ''}，获取了 ${musicLoginStatus[selectedPlatform].trackCount || 0} 首歌曲` : `✗ ${musicLoginStatus[selectedPlatform].error || '登录失败'}`}
                       </div>
                     )}
                     <button onClick={handleMusicLogin} disabled={settingsLoading} className="w-full bg-[#2ee4a6] text-black font-bold py-2.5 rounded-lg hover:bg-[#20b583] transition-colors text-sm disabled:opacity-50">{settingsLoading ? '登录中...' : '登录并获取歌单'}</button>
-                    {musicLoginStatus[selectedPlatform]?.loggedIn && (
+                    {musicLoginStatus[selectedPlatform]?.success && (
                       <button onClick={handleRefreshUserData} disabled={settingsLoading} className="w-full border border-gray-600 text-gray-400 font-bold py-2 rounded-lg hover:bg-gray-800 hover:text-white transition-colors text-xs disabled:opacity-50">
                         🔄 重新获取用户数据
                       </button>
@@ -725,10 +725,10 @@ export default function App() {
                 <span className="flex items-center gap-2 text-[#2ee4a6]">
                   <span className={`w-2 h-2 rounded-full bg-[#2ee4a6] ${wsConnected ? 'animate-pulse shadow-[0_0_10px_#2ee4a6]' : 'opacity-30'}`} />{wsConnected ? '信号已连接' : '信号丢失'}
                 </span>
-                {Object.values(musicLoginStatus).some(s => s?.loggedIn) && (
+                {Object.values(musicLoginStatus).some(s => s?.success) && (
                   <span className="flex items-center gap-1.5 text-gray-500">
                     <Music className="w-3 h-3 text-[#2ee4a6]/60" />
-                    <span>{Object.entries(musicLoginStatus).filter(([_, s]) => s?.loggedIn).map(([_, s]) => s.nickname).join(', ')}</span>
+                    <span>{Object.entries(musicLoginStatus).filter(([_, s]) => s?.success).map(([_, s]) => s.nickname).join(', ')}</span>
                     <span className="text-gray-600">·</span>
                     <span>{Object.values(musicLoginStatus).reduce((sum, s) => sum + (s?.trackCount || 0), 0)}</span>
                   </span>
