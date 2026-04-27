@@ -487,7 +487,8 @@ class RadioServer {
                 type: 'dj_response',
                 say: llmResponse.say,
                 track: track,
-                queue: llmResponse.queue || []
+                queue: llmResponse.queue || [],
+                weather: weather
             });
         } catch (error) {
             console.error('处理用户输入失败:', error);
@@ -525,7 +526,8 @@ class RadioServer {
                 type: 'dj_broadcast',
                 say: llmResponse.say,
                 track: track,
-                queue: llmResponse.queue || []
+                queue: llmResponse.queue || [],
+                weather: weather
             });
         } catch (error) {
             console.error('处理下一首失败:', error);
