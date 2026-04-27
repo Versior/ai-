@@ -8,7 +8,7 @@ import {
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.0.49';
+const APP_VERSION = '1.0.50';
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -245,10 +245,16 @@ export default function App() {
   }, [wsConnected]);
 
   // === 播放列表点击：直接播放，不触发 LLM ===
+  // === 播放列表点击：播放 + 生成 AI 总结 ===
   const handleQueueClick = useCallback(async (track) => {
     if (track.url) {
       doPlayTrack(track);
-      setSystemMessage('正在播放: ' + track.title);
+      setSystemMessage('正在生成推荐语...');
+      try {
+        const res = await fetch(API_BASE + '/api/ai-summary?title=' + encodeURIComponent(track.title) + '&artist=' + encodeURIComponent(track.artist || ''));
+        const data = await res.json();
+        if (data.success && data.say) setSystemMessage(data.say);
+      } catch (e) { setSystemMessage(''); }
       return;
     }
     setSearchingTrack(track.title);
@@ -258,7 +264,12 @@ export default function App() {
       const data = await res.json();
       if (data.success && data.track && data.track.url) {
         doPlayTrack(data.track);
-        setSystemMessage('正在播放: ' + data.track.title);
+        setSystemMessage('正在生成推荐语...');
+        try {
+          const aiRes = await fetch(API_BASE + '/api/ai-summary?title=' + encodeURIComponent(data.track.title) + '&artist=' + encodeURIComponent(data.track.artist || ''));
+          const aiData = await aiRes.json();
+          if (aiData.success && aiData.say) setSystemMessage(aiData.say);
+        } catch (e) { setSystemMessage(''); }
       } else {
         setSystemMessage('未找到 ' + track.title);
       }

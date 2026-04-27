@@ -387,6 +387,35 @@ class RadioServer {
                 return;
             }
 
+            // AI 总结接口：根据歌曲信息生成播报词
+            if (req.url.startsWith('/api/ai-summary') && req.method === 'GET') {
+                try {
+                    const queryStart = req.url.indexOf('?');
+                    let title = '', artist = '';
+                    if (queryStart > 0) {
+                        const qs = req.url.substring(queryStart + 1);
+                        for (const pair of qs.split('&')) {
+                            const eqIdx = pair.indexOf('=');
+                            if (eqIdx < 0) continue;
+                            const key = decodeURIComponent(pair.substring(0, eqIdx));
+                            const val = decodeURIComponent(pair.substring(eqIdx + 1));
+                            if (key === 'title') title = val;
+                            if (key === 'artist') artist = val;
+                        }
+                    }
+                    if (!title) { res.writeHead(400); res.end(JSON.stringify({ success: false, error: '缺少 title' })); return; }
+                    const weather = await weatherService.getWeather('127.0.0.1');
+                    const weatherDesc = weatherService.getWeatherDesc(weather);
+                    const llmResponse = await llmService.generateResponse(`播放 ${title}`, weatherDesc);
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ success: true, say: llmResponse.say, track: llmResponse.track }));
+                } catch (e) {
+                    console.error('❌ /api/ai-summary 错误:', e.message);
+                    res.writeHead(500); res.end(JSON.stringify({ success: false, error: e.message }));
+                }
+                return;
+            }
+
             // 小爱音箱 LLM 接口
             if (req.url === '/api/chat' && req.method === 'POST') {
                 let body = '';
