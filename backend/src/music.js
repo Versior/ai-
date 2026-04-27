@@ -734,31 +734,7 @@ class MusicService {
         const cookie = (svc.cookie) || process.env.NETEASE_COOKIE || process.env.NMTID || '';
         const apiUrl = process.env.MUSIC_API_URL || '';
 
-        // 优先：NeteaseCloudMusicApi 代理
-        if (apiUrl) {
-            try {
-                const proxyRes = await axios.post(`${apiUrl}/search`,
-                    `keywords=${encodeURIComponent(songName)}&limit=5&type=1`,
-                    { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 10000 }
-                );
-                const proxySongs = proxyRes.data?.result?.songs;
-                if (proxySongs && proxySongs.length > 0) {
-                    console.log(`  代理搜索原始结果: ${JSON.stringify(proxySongs.slice(0,3).map(s => ({ id: s.id, name: s.name, artist: s.ar?.[0]?.name })))}`);
-                    for (const song of proxySongs.slice(0, 3)) {
-                        try {
-                            return await this._buildTrackInfoFromProxy(song, apiUrl);
-                        } catch (e) {
-                            console.log(`  ⚠️ _buildTrackInfoFromProxy 失败: ${e.message}`);
-                            continue;
-                        }
-                    }
-                }
-            } catch (proxyErr) {
-                console.log(`  ⚠️ 代理搜索失败: ${proxyErr.message}`);
-            }
-        }
-
-        // 回退：直接 POST 官方 API
+        // 优先：官方 API 搜索
         if (cookie) {
             try {
                 const searchRes = await axios.post('https://music.163.com/api/cloudsearch/pc',
@@ -774,6 +750,30 @@ class MusicService {
                 }
             } catch (e) {
                 console.log(`  ⚠️ 官方搜索失败: ${e.message}`);
+            }
+        }
+
+        // 回退：NeteaseCloudMusicApi 代理
+        if (apiUrl) {
+            try {
+                const proxyRes = await axios.post(`${apiUrl}/search`,
+                    `keywords=${encodeURIComponent(songName)}&limit=5&type=1`,
+                    { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 10000 }
+                );
+                const proxySongs = proxyRes.data?.result?.songs;
+                if (proxySongs && proxySongs.length > 0) {
+                    console.log(`  ✅ 代理搜索成功: ${proxySongs.length} 首`);
+                    for (const song of proxySongs.slice(0, 3)) {
+                        try {
+                            return await this._buildTrackInfoFromProxy(song, apiUrl);
+                        } catch (e) {
+                            console.log(`  ⚠️ _buildTrackInfoFromProxy 失败: ${e.message}`);
+                            continue;
+                        }
+                    }
+                }
+            } catch (proxyErr) {
+                console.log(`  ⚠️ 代理搜索失败: ${proxyErr.message}`);
             }
         }
 

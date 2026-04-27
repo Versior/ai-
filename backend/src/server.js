@@ -530,13 +530,6 @@ class RadioServer {
             let musicData;
             try {
                 musicData = await musicService.searchSong(trackInfo.title);
-                console.log('  ✅ 搜索成功:', JSON.stringify({
-                    id: musicData?.id,
-                    title: musicData?.title,
-                    artist: musicData?.artist,
-                    url_prefix: musicData?.url?.substring(0, 60) || 'EMPTY',
-                    hotComment: musicData?.hotComment?.substring(0, 30) || 'EMPTY'
-                }));
             } catch (searchErr) {
                 console.log(`⚠️ 搜索失败: ${searchErr.message}，从歌单随机选一首`);
                 // 从用户歌单中随机选一首能播放的
