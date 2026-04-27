@@ -252,7 +252,25 @@ class RadioServer {
                         }
                         if (result.success) {
                             result.loggedIn = true;
-                            console.log(`📋 正在获取 ${platform} 用户 ${result.nickname} 的音乐数据...`);
+                            console.log(`✅ ${platform} 登录成功: ${result.nickname}`);
+                            // 持久化 Cookie 到 .env
+                            if (result.cookie) {
+                                try {
+                                    const envPath = path.join(__dirname, '..', '.env');
+                                    let envContent = '';
+                                    if (fs.existsSync(envPath)) envContent = fs.readFileSync(envPath, 'utf8');
+                                    const key = platform === 'netease' ? 'NETEASE_COOKIE' : platform === 'kuwo' ? 'KUWO_COOKIE' : platform === 'qqmusic' ? 'QQMUSIC_COOKIE' : 'KUGOU_COOKIE';
+                                    const regex = new RegExp(`^${key}=.*$`, 'm');
+                                    if (regex.test(envContent)) {
+                                        envContent = envContent.replace(regex, `${key}=${result.cookie}`);
+                                    } else {
+                                        envContent += `\n${key}=${result.cookie}`;
+                                    }
+                                    fs.writeFileSync(envPath, envContent.trim() + '\n');
+                                    process.env[key] = result.cookie;
+                                    console.log(`  ✅ Cookie 已保存到 .env`);
+                                } catch (e) { console.warn('⚠️ 保存 Cookie 失败:', e.message); }
+                            }
                             try {
                                 const uniqueTracks = await musicService.fetchUserData(platform, result.uid);
                                 const prefsPath = path.join(__dirname, 'user-music-prefs.json');

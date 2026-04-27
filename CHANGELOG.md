@@ -1,5 +1,9 @@
 # 📋 Versior AI 电台 - 更新日志
 
+## v1.0.26 (2026-04-27)
+- 🔧 修复：登录成功后 Cookie 持久化到 .env 文件
+- 🔧 修复：getSongUrl/pickRandomFromLibrary 优先用 this.netease.cookie
+
 ## v1.0.25 (2026-04-27)
 - 🔧 修复：播放链接/歌曲详情/热评接口全部改为 POST
 
