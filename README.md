@@ -1,29 +1,37 @@
 # 🎵 Versior AI 电台
 
-> 赛博朋克风格 AI 音乐电台 · 智能推荐 · 多平台歌单同步 · 天气感知
+> 赛博朋克风格 AI 音乐电台 · AI 智能推荐 · 多平台歌单同步 · 天气感知
 
 ## ✨ 特性
 
-- 🤖 **AI DJ** — AI 驱动，自然语言对话点歌
+- 🤖 **AI DJ** — AI 驱动，根据天气和心情推荐音乐
 - 🎨 **赛博朋克 UI** — 像素字体、呼吸灯、暗色主题
 - 🎵 **多平台支持** — 网易云、酷我、QQ音乐、酷狗
 - 🌤️ **天气感知** — 根据天气推荐适合的音乐
 - 📱 **响应式** — 桌面端 + 移动端完美适配
-- 🐳 **一键部署** — Docker Compose 一键启动
-- 🌐 **公网就绪** — 内置 nginx 配置 + WebSocket 支持
+- 🐳 **Docker 部署** — 一键启动
 
 ## 📋 版本更新
+
+### v1.0.22 (2026-04-27)
+- 🔧 修复：搜索接口改用 POST（NeteaseCloudMusicApi /search 只支持 POST）
+- 🔧 修复：netease-api 代理容器改为 docker run 单独启动
+- 🔧 修复：netease-api 端口改为 9934（避免冲突）
+- 🔧 修复：docker-compose 不再管理 netease-api（避免健康检查问题）
+- 🔧 修复：this.netease 防御性检查
+
+### v1.0.21 (2026-04-27)
+- 🔧 修复：搜索接口路径改为 /cloudsearch
+
+### v1.0.20 (2026-04-27)
+- 🔧 修复：搜索接口路径改为 /cloudsearch
 
 ### v1.0.19 (2026-04-27)
 - 🔧 恢复：NeteaseCloudMusicApi 代理容器（最优方案）
 - 🔧 修复：搜索优先用代理 API，失败回退歌单随机选
 
-### v1.0.18 (2026-04-27)
-- 🔧 去掉 NeteaseCloudMusicApi 代理容器依赖，改用 Cookie 直接调用官方 API
-
-### v1.0.17 (2026-04-27)
-- 🔧 修复：getSongUrl 改用 POST 官方 API
-- 🔧 修复：搜索多重重试：代理 API → 官方 POST → weapi 加密
+### v1.0.16 (2026-04-27)
+- 🔧 修复：pickRandomFromLibrary 类内部语法错误
 
 ### v1.0.15 (2026-04-27)
 - 🔧 修复：搜索失败后从用户歌单随机选歌
@@ -46,7 +54,6 @@
 
 ### v1.0.9 (2026-04-27)
 - 🔧 修复：网易云登录状态显示
-- 🔧 修复：README 添加版本更新日志
 
 ### v1.0.8 (2026-04-27)
 - 🔧 修复：WS 断连后自动重连（指数退避，最多 10 次）
@@ -69,89 +76,72 @@
 
 ## 🚀 快速开始
 
-### 方式一：Docker 一键部署（推荐）
+### 前置条件
 
-#### 1. 部署 NeteaseCloudMusicApi 代理（必须，用于搜索和播放链接）
+- Docker + Docker Compose
+- AI API Key（如 LongCat）
+- 网易云音乐 Cookie（可选，用于搜索和播放链接）
+
+### 1. 克隆项目
 
 ```bash
-# 拉取镜像
-docker pull binaryify/netease_cloud_music_api:latest
+git clone https://github.com/Versior/ai-.git
+cd versior-radio
+```
 
-# 启动代理容器
+### 2. 配置环境变量
+
+```bash
+cp backend/.env.example data/.env
+```
+
+编辑 `data/.env`，**以下三项必填，无默认值**：
+
+```env
+LONGCAT_API_URL=https://your-ai-api-url
+LONGCAT_MODEL=your-model-name
+MUSIC_API_URL=http://netease-api:3000
+```
+
+可选配置：
+
+```env
+ADMIN_PASSWORD=versior123
+LONGCAT_API_KEY=your-api-key
+MUSIC_SOURCE=netease
+NETEASE_COOKIE=your-netease-cookie
+```
+
+### 3. 启动 NeteaseCloudMusicApi 代理
+
+⚠️ **必须单独用 `docker run` 启动，不要用 docker-compose**：
+
+```bash
 docker run -d \
   --name netease-api \
   -p 9934:3000 \
   --restart unless-stopped \
   binaryify/netease_cloud_music_api:latest
-
-# 验证代理是否正常
-curl "http://localhost:3000/status"
-curl "http://localhost:3000/search?keywords=周杰伦&limit=3"
 ```
 
-#### 2. 部署 Versior AI 电台
+验证代理是否正常：
 
 ```bash
-# 1. 克隆项目
-git clone https://github.com/Versior/ai-.git
-cd versior-radio
+curl -X POST "http://localhost:9934/search" -d "keywords=海阔天空&limit=3"
+# 应返回 JSON 数据
+```
 
-# 2. 配置环境变量
-cp backend/.env.example data/.env
-# 编辑 data/.env，填入 API Key 和管理员密码
+### 4. 启动 Versior AI 电台
 
-# 3. 一键启动（会自动连接 netease-api 代理）
+```bash
 docker compose up -d
-
-# 4. 访问
-# 内网: http://localhost:8834
-# 或通过反向代理用域名访问
 ```
 
-#### 3. 配置说明
+### 5. 访问
 
-`docker-compose.yml` 中 `MUSIC_API_URL` 环境变量指向代理容器：
-
-```yaml
-environment:
-  - MUSIC_API_URL=http://netease-api:3000
 ```
-
-如果代理容器和电台容器在同一 docker 网络中，用 `netease-api` 主机名即可。
-如果分开部署，改为实际 IP：`http://192.168.0.xxx:3000`。
-
-### 方式二：手动部署
-
-```bash
-# 后端
-cd backend
-cp .env.example .env
-# 编辑 .env
-npm install
-node src/server.js
-
-# 前端（开发模式）
-cd frontend
-npm install
-npm run dev
-```
-
-### 方式三：公网部署（Docker + Nginx + SSL）
-
-```bash
-# 1. 启动服务
-docker compose up -d
-
-# 2. 配置 nginx
-cp nginx.conf /etc/nginx/conf.d/versior.conf
-# 修改 server_name 为你的域名
-nginx -t && nginx -s reload
-
-# 3. 申请 SSL 证书
-certbot --nginx -d your-domain.com
-
-# 4. 访问
-# https://your-domain.com
+内网: http://localhost:8834
+公网: http://your-server-ip:8834
 ```
 
 ## 📁 项目结构
@@ -164,114 +154,92 @@ versior-radio/
 │   │   ├── llm.js          # AI 对话服务
 │   │   ├── music.js        # 音乐搜索服务
 │   │   ├── weather.js      # 天气服务
-│   │   └── user-music-prefs.json  # 用户偏好
+│   │   └── user-music-prefs.json  # 用户偏好歌曲列表
 │   ├── package.json
 │   └── .env.example        # 环境变量模板
 ├── frontend/
 │   ├── src/
 │   │   ├── App.jsx         # 主应用
-│   │   ├── index.css       # 全局样式
-│   │   └── main.jsx        # 入口
-│   ├── public/
-│   │   └── fonts/          # 本地字体
+│   │   └── index.css       # 全局样式
 │   └── package.json
-├── Dockerfile              # Docker 构建
-├── docker-compose.yml      # Docker Compose
-├── nginx.conf              # Nginx 配置模板
+├── Dockerfile              # 多架构 Docker 构建
+├── docker-compose.yml      # Docker Compose（仅管理电台容器）
 └── README.md
 ```
 
 ## ⚙️ 配置说明
 
-### 环境变量（backend/.env）
+### 环境变量（data/.env）
 
-| 变量 | 必填 | 默认值 | 说明 |
-|------|------|--------|------|
-| `PORT` | 否 | 8834 | 服务端口 |
-| `ADMIN_PASSWORD` | 是 | - | 管理员密码 |
-| `LONGCAT_API_KEY` | 是 | - | AI API Key |
-| `LONGCAT_API_URL` | 是 | - | AI API 地址（**无默认值，必须填写**） |
-| `LONGCAT_MODEL` | 是 | - | AI 模型（**无默认值，必须填写**） |
-| `MUSIC_API_URL` | 是 | - | 音乐搜索 API（**无默认值，必须填写**） |
-| `MUSIC_SOURCE` | 否 | netease | 默认音乐源 |
-| `NETEASE_COOKIE` | 否 | - | 网易云 Cookie |
+| 变量 | 必填 | 说明 |
+|------|------|------|
+| `LONGCAT_API_URL` | ✅ | AI API 地址（无默认值） |
+| `LONGCAT_MODEL` | ✅ | AI 模型名称（无默认值） |
+| `LONGCAT_API_KEY` | ✅ | AI API Key |
+| `MUSIC_API_URL` | ✅ | NeteaseCloudMusicApi 代理地址（无默认值） |
+| `ADMIN_PASSWORD` | 否 | 管理员密码（默认 versior123） |
+| `MUSIC_SOURCE` | 否 | 默认音乐源（netease/kuwo/qqmusic/kugou） |
+| `NETEASE_COOKIE` | 否 | 网易云 Cookie（用于歌单同步和播放链接） |
 
-### 前端配置页面
+### 前端设置页面
 
-访问电台 → 点击右上角「设置」→ 输入管理员密码 → 「配置」Tab
+访问电台 → 点击右上角「设置」→ 输入管理员密码
 
-可配置项：
-- AI API URL / Key / 模型
-- 音乐 API URL
-- 音乐源选择
-
-## 🌐 部署场景
-
-### 内网/本地部署
-```bash
-docker compose up -d
-# 访问: http://localhost:8834
-```
-
-### 公网部署（单端口）
-```bash
-# 服务器防火墙开放 8834 端口
-docker compose up -d
-# 访问: http://your-server-ip:8834
-```
-
-### 公网部署（Nginx + SSL）
-```bash
-# 1. 启动 Docker
-docker compose up -d
-
-# 2. 配置 nginx（见 nginx.conf）
-# 3. 申请 SSL: certbot --nginx -d your-domain.com
-# 访问: https://your-domain.com
-```
+可配置：
+- **配置** Tab：AI API URL / Key / 模型、音乐 API URL
+- **音乐登录** Tab：网易云/酷我/QQ音乐/酷狗 登录
+- **密码** Tab：修改管理员密码
 
 ## 🐳 多架构 Docker 构建
 
-镜像支持 `linux/amd64` 和 `linux/arm64`（树莓派 / Apple Silicon）。
+镜像 `versior/ai:latest` 支持 `linux/amd64` 和 `linux/arm64`。
+
+通过 GitHub Actions 自动构建和推送，无需手动操作。
+
+手动构建：
 
 ```bash
-# 登录 Docker Hub
-docker login
-
-# 创建 buildx 构建器（首次）
 docker buildx create --use --name multiarch 2>/dev/null || true
-
-# 构建 + 推送 amd64 + arm64
 docker buildx build --platform linux/amd64,linux/arm64 \
   -t versior/ai:latest --push .
-
-# 仅构建当前架构（本地测试）
-docker build -t versior/ai:latest .
 ```
 
-## 🔧 开发
+## 🔍 常见问题
+
+### 搜索失败 / 无法播放
+
+1. **检查 netease-api 代理是否正常运行**：
+   ```bash
+   docker ps | grep netease-api
+   curl -X POST "http://localhost:9934/search" -d "keywords=测试&limit=1"
+   ```
+
+2. **检查 .env 配置**：
+   - `MUSIC_API_URL` 必须填写（如 `http://netease-api:3000`）
+   - `LONGCAT_API_URL`、`LONGCAT_MODEL`、`LONGCAT_API_KEY` 必须填写
+
+3. **搜索回退机制**：代理搜索失败后，会自动从用户歌单（374首）随机选一首能播放的歌曲
+
+### netease-api 容器启动后立即退出
+
+不要用 docker-compose 管理 netease-api，必须单独用 `docker run` 启动。
+
+### 端口冲突
+
+netease-api 默认使用 9934 端口。如需修改：
+```bash
+docker run -d --name netease-api -p YOUR_PORT:3000 --restart unless-stopped binaryify/netease_cloud_music_api:latest
+```
+
+### 更新镜像
 
 ```bash
-# 后端开发
-cd backend && node src/server.js
-
-# 前端开发
-cd frontend && npm run dev
-
-# 构建前端
-cd frontend && npm run build
+cd /opt/versior-radio
+docker compose pull
+docker compose up -d
+docker pull binaryify/netease_cloud_music_api:latest
+docker restart netease-api
 ```
-
-## 📝 注意事项
-
-1. **首次使用**：需要配置 AI API Key、API URL、模型名称和音乐 API（在 .env 或前端设置页面）
-2. **必填项无默认值**：`LONGCAT_API_URL`、`LONGCAT_MODEL`、`MUSIC_API_URL` 必须手动填写
-3. **管理员密码**：默认 `versior123`，首次登录后请在设置页「密码」Tab 修改
-4. **音乐平台登录**：在设置页面「音乐登录」Tab 配置
-5. **网易云/酷我**：支持账号密码或 Cookie 登录
-6. **QQ音乐/酷狗**：仅支持 Cookie 登录
-7. **音频播放**：浏览器直接请求 CDN，无需代理
-8. **WebSocket**：自动适配 HTTP/HTTPS
 
 ## 📄 许可证
 

@@ -542,7 +542,6 @@ class PlatformService {
     async searchSong(songName) {
         try {
             console.log(`🔍 搜索歌曲: ${songName}`);
-            console.log(`  DEBUG: this.netease=${typeof this.netease}, apiUrl=${process.env.MUSIC_API_URL || 'none'}`);
             const apiUrl = process.env.MUSIC_API_URL || '';
             const cookie = (this.netease && this.netease.cookie) || process.env.NETEASE_COOKIE || process.env.NMTID || '';
 
