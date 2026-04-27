@@ -8,7 +8,7 @@ import {
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.0.10';
+const APP_VERSION = '1.0.11';
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -73,7 +73,7 @@ export default function App() {
       if (data.platforms) {
         const newStatus = {};
         for (const [p, info] of Object.entries(data.platforms)) {
-          newStatus[p] = { loggedIn: info.loggedIn, nickname: info.nickname, trackCount: info.trackCount || 0, error: info.error };
+          newStatus[p] = { loggedIn: info.loggedIn, nickname: info.nickname, trackCount: info.trackCount || 0, success: info.loggedIn };
         }
         setMusicLoginStatus(newStatus);
       }
@@ -94,7 +94,7 @@ export default function App() {
       const data = await res.json();
       setSettingsLoading(false);
       if (data.success) {
-        setMusicLoginStatus(p => ({ ...p, [platform]: { ...p[platform], loggedIn: true, nickname: data.nickname, trackCount: data.trackCount } }));
+        setMusicLoginStatus(p => ({ ...p, [platform]: { ...p[platform], success: true, nickname: data.nickname, trackCount: data.trackCount } }));
       } else {
         setSettingsError(data.error || '获取失败');
       }
@@ -625,7 +625,7 @@ export default function App() {
                     {/* 选择平台登录 */}
                     <div className="flex gap-1 mb-2 flex-wrap">
                       {[{ k: 'netease', l: '网易云' }, { k: 'kuwo', l: '酷我' }, { k: 'qqmusic', l: 'QQ音乐' }, { k: 'kugou', l: '酷狗' }].map(p => (
-                        <button key={p.k} onClick={() => { setSelectedPlatform(p.k); setLoginForm({ username: '', password: '', cookie: '', loginType: 'password' }); }} className={`text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${selectedPlatform === p.k ? 'bg-[#2ee4a6] text-black' : 'bg-gray-800 text-gray-400'}`}>{p.l}</button>
+                        <button key={p.k} onClick={() => { setSelectedPlatform(p.k); setLoginForm({ username: '', password: '', cookie: '', loginType: 'password' }); setMusicLoginStatus(prev => { const n = { ...prev }; delete n[p.k]; return n; }); }} className={`text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${selectedPlatform === p.k ? 'bg-[#2ee4a6] text-black' : 'bg-gray-800 text-gray-400'}`}>{p.l}</button>
                       ))}
                     </div>
                     {(selectedPlatform === 'qqmusic' || selectedPlatform === 'kugou') ? (
@@ -653,9 +653,14 @@ export default function App() {
                         )}
                       </div>
                     )}
-                    {musicLoginStatus[selectedPlatform] && (
-                      <div className={`text-xs ${musicLoginStatus[selectedPlatform].loggedIn ? 'text-[#2ee4a6]' : 'text-red-400'}`}>
-                        {musicLoginStatus[selectedPlatform].success ? `✓ 已登录 ${musicLoginStatus[selectedPlatform].nickname || ''}，获取了 ${musicLoginStatus[selectedPlatform].trackCount || 0} 首歌曲` : `✗ ${musicLoginStatus[selectedPlatform].error || '登录失败'}`}
+                    {musicLoginStatus[selectedPlatform]?.success && (
+                      <div className="text-xs text-[#2ee4a6]">
+                        ✓ 已登录 {musicLoginStatus[selectedPlatform].nickname || ''}，获取了 {musicLoginStatus[selectedPlatform].trackCount || 0} 首歌曲
+                      </div>
+                    )}
+                    {musicLoginStatus[selectedPlatform]?.error && (
+                      <div className="text-xs text-red-400">
+                        ✗ {musicLoginStatus[selectedPlatform].error}
                       </div>
                     )}
                     <button onClick={handleMusicLogin} disabled={settingsLoading} className="w-full bg-[#2ee4a6] text-black font-bold py-2.5 rounded-lg hover:bg-[#20b583] transition-colors text-sm disabled:opacity-50">{settingsLoading ? '登录中...' : '登录并获取歌单'}</button>
