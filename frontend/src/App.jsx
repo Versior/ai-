@@ -8,7 +8,7 @@ import {
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.0.48';
+const APP_VERSION = '1.0.49';
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -244,29 +244,30 @@ export default function App() {
     // 不在这里发 preload_next，播放到 80% 时自动触发
   }, [wsConnected]);
 
-  // === 播放列表点击：搜索→播放，不发 user_input 避免重复 ===
+  // === 播放列表点击：直接播放，不触发 LLM ===
   const handleQueueClick = useCallback(async (track) => {
-    if (track.url) { doPlayTrack(track); return; }
+    if (track.url) {
+      doPlayTrack(track);
+      setSystemMessage('正在播放: ' + track.title);
+      return;
+    }
     setSearchingTrack(track.title);
-    setSystemMessage(`正在搜索 ${track.title}...`);
+    setSystemMessage('正在搜索 ' + track.title + '...');
     try {
-      const res = await fetch(`${API_BASE}/api/search?title=${encodeURIComponent(track.title)}&artist=${encodeURIComponent(track.artist)}`);
+      const res = await fetch(API_BASE + '/api/search?title=' + encodeURIComponent(track.title) + '&artist=' + encodeURIComponent(track.artist));
       const data = await res.json();
       if (data.success && data.track && data.track.url) {
         doPlayTrack(data.track);
-        // 发 user_input 让 LLM 生成总结（不触发播放）
-        if (wsRef.current && wsConnected) {
-          wsRef.current.send(JSON.stringify({ type: 'user_input', text: `播放 ${track.title}` }));
-        }
+        setSystemMessage('正在播放: ' + data.track.title);
       } else {
-        setSystemMessage(`抱歉，未找到 ${track.title}`);
+        setSystemMessage('未找到 ' + track.title);
       }
     } catch (e) {
-      setSystemMessage('搜索失败，请检查网络');
+      setSystemMessage('搜索失败');
     } finally {
       setSearchingTrack(null);
     }
-  }, [doPlayTrack, wsConnected]);
+  }, [doPlayTrack]);
 
   const togglePlay = () => {
     if (!audioRef.current) return;
