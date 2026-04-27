@@ -28,7 +28,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=8834
-      - MUSIC_API_URL=http://netease-api:3000
+      - MUSIC_API_URL=http://host.docker.internal:9934
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8834/health || exit 1"]

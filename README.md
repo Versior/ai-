@@ -100,7 +100,7 @@ cp backend/.env.example data/.env
 ```env
 LONGCAT_API_URL=https://your-ai-api-url
 LONGCAT_MODEL=your-model-name
-MUSIC_API_URL=http://netease-api:3000
+MUSIC_API_URL=http://host.docker.internal:9934
 ```
 
 可选配置：
