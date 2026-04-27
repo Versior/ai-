@@ -75,14 +75,14 @@
 
 ```bash
 # 拉取镜像
-docker pull binaryify/netease-cloud-music-api:latest
+docker pull binaryify/netease_cloud_music_api:latest
 
 # 启动代理容器
 docker run -d \
   --name netease-api \
   -p 3000:3000 \
   --restart unless-stopped \
-  binaryify/netease-cloud-music-api:latest
+  binaryify/netease_cloud_music_api:latest
 
 # 验证代理是否正常
 curl "http://localhost:3000/status"
