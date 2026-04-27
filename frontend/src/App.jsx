@@ -486,7 +486,7 @@ export default function App() {
                     多云禁止悲观丨KaiXin <ExternalLink className="w-3 h-3" />
                   </a>
                 </p>
-                <p>• <strong className="text-gray-300">核心：</strong>LongCat-Flash-Lite AI 模型驱动</p>
+                <p>• <strong className="text-gray-300">核心：</strong>AI 模型驱动</p>
                 <p>• <strong className="text-gray-300">功能：</strong>智能音乐推荐 · 多平台歌单同步 · 天气感知</p>
               </div>
             </div>
@@ -531,7 +531,7 @@ export default function App() {
                       </div>
                     </div>
                     <div className="flex justify-between items-center border-b border-gray-800/50 pb-3">
-                      <div><h3 className="text-[13px] text-gray-200 tracking-wider">AI 模型</h3><p className="text-[10px] text-gray-500 mt-1 font-mono">{settingsConfig.LONGCAT_MODEL || 'LongCat-Flash-Lite'}</p></div>
+                      <div><h3 className="text-[13px] text-gray-200 tracking-wider">AI 模型</h3><p className="text-[10px] text-gray-500 mt-1 font-mono">{settingsConfig.LONGCAT_MODEL || '未配置'}</p></div>
                       <div className="flex items-center gap-2"><Dot ok={backendStatus.llm} /><span className="text-[10px] text-gray-500">{backendStatus.llm ? '正常' : '异常'}</span></div>
                     </div>
                     <div className="flex justify-between items-center border-b border-gray-800/50 pb-3">
