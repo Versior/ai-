@@ -548,10 +548,13 @@ class PlatformService {
             // 优先：NeteaseCloudMusicApi 代理
             if (apiUrl) {
                 try {
-                    const proxyRes = await axios.get(`${apiUrl}/cloudsearch`, {
-                        params: { keywords: songName, limit: 5 },
-                        timeout: 10000
-                    });
+                    const proxyRes = await axios.post(`${apiUrl}/search`,
+                        `keywords=${encodeURIComponent(songName)}&limit=5&type=1`,
+                        {
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            timeout: 10000
+                        }
+                    );
                     const proxySongs = proxyRes.data?.result?.songs;
                     if (proxySongs && proxySongs.length > 0) {
                         console.log(`  ✅ 代理搜索成功: ${proxySongs.length} 首`);
