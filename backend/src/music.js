@@ -732,9 +732,7 @@ class MusicService {
 
         // 获取 Cookie
         const cookie = (svc.cookie) || process.env.NETEASE_COOKIE || process.env.NMTID || '';
-        const apiUrl = process.env.MUSIC_API_URL || '';
-
-        // 优先：官方 API 搜索
+        // 官方 API 搜索
         if (cookie) {
             try {
                 const searchRes = await axios.post('https://music.163.com/api/cloudsearch/pc',
@@ -743,40 +741,13 @@ class MusicService {
                 );
                 if (searchRes.data?.code === 200 && searchRes.data?.result?.songs?.length > 0) {
                     const songs = searchRes.data.result.songs;
-                    console.log(`  ✅ 官方搜索成功: ${songs.length} 首`);
+                    console.log(`  ✅ 搜索成功: ${songs.length} 首`);
                     for (const song of songs.slice(0, 3)) {
-                        if (apiUrl) {
-                            try { return await this._buildTrackInfoFromProxy(song, apiUrl); } catch (e) { continue; }
-                        }
                         try { return await this._buildTrackInfoDirect(song, cookie); } catch (e) { continue; }
                     }
                 }
             } catch (e) {
-                console.log(`  ⚠️ 官方搜索失败: ${e.message}`);
-            }
-        }
-
-        // 回退：NeteaseCloudMusicApi 代理
-        if (apiUrl) {
-            try {
-                const proxyRes = await axios.post(`${apiUrl}/search`,
-                    `keywords=${encodeURIComponent(songName)}&limit=5&type=1`,
-                    { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 10000 }
-                );
-                const proxySongs = proxyRes.data?.result?.songs;
-                if (proxySongs && proxySongs.length > 0) {
-                    console.log(`  ✅ 代理搜索成功: ${proxySongs.length} 首`);
-                    for (const song of proxySongs.slice(0, 3)) {
-                        try {
-                            return await this._buildTrackInfoFromProxy(song, apiUrl);
-                        } catch (e) {
-                            console.log(`  ⚠️ _buildTrackInfoFromProxy 失败: ${e.message}`);
-                            continue;
-                        }
-                    }
-                }
-            } catch (proxyErr) {
-                console.log(`  ⚠️ 代理搜索失败: ${proxyErr.message}`);
+                console.log(`  ⚠️ 搜索失败: ${e.message}`);
             }
         }
 
@@ -877,28 +848,12 @@ class MusicService {
     /**
      * 构建歌曲信息（播放链接、详情、热评）
      */
-    async _buildTrackInfoFromProxy(song, apiUrl) {
+    async _buildTrackInfoFromProxy(song) {
         const songId = song.id;
         const cookie = (this.netease && this.netease.cookie) || process.env.NETEASE_COOKIE || process.env.NMTID || '';
-        // 获取播放链接（优先用代理，备选官方 API）
+        // 获取播放链接（官方 API）
         let songUrl = '';
-        // 1. 尝试代理 /song/url/v1
-        if (apiUrl) {
-            try {
-                const proxyUrlRes = await axios.get(`${apiUrl}/song/url/v1`,
-                    { params: { id: songId, level: 'exhigh' }, headers: { 'Cookie': cookie }, timeout: 10000 }
-                );
-                songUrl = proxyUrlRes.data?.data?.[0]?.url || '';
-                if (songUrl) {
-                    songUrl = songUrl.replace('http://', 'https://');
-                    console.log(`  代理获取播放链接成功: ${songUrl.substring(0, 50)}...`);
-                }
-            } catch (e) {
-                console.log(`  代理获取播放链接失败: ${e.message}`);
-            }
-        }
-        // 2. 备选：官方 API
-        if (!songUrl && cookie) {
+        if (cookie) {
             try {
                 const urlRes = await axios.post(
                     'https://music.163.com/api/song/enhance/player/url',
@@ -914,30 +869,13 @@ class MusicService {
                     }
                 );
                 songUrl = urlRes.data?.data?.[0]?.url || '';
-                if (songUrl) {
-                    songUrl = songUrl.replace('http://', 'https://');
-                } else {
-                    const itemCode = urlRes.data?.data?.[0]?.code;
-                    console.log(`  官方API返回 null, item_code=${itemCode}`);
-                }
+                if (songUrl) songUrl = songUrl.replace('http://', 'https://');
             } catch (e) {}
         }
-        // 3. Fallback: 标准免费源
-        if (!songUrl) {
-            songUrl = `https://music.163.com/song/media/outer/url?id=${songId}.mp3`;
-            console.log(`  使用 fallback URL for ${songId}`);
-        }
-        // 获取详情（优先代理）
+        if (!songUrl) songUrl = `https://music.163.com/song/media/outer/url?id=${songId}.mp3`;
+        // 获取详情
         let detail = song;
-        if (apiUrl) {
-            try {
-                const proxyDetailRes = await axios.get(`${apiUrl}/song/detail`,
-                    { params: { ids: songId }, headers: { 'Cookie': cookie }, timeout: 10000 }
-                );
-                detail = proxyDetailRes.data?.songs?.[0] || song;
-            } catch (e) {}
-        }
-        if (detail === song && cookie) {
+        if (cookie) {
             try {
                 const detailRes = await axios.post('https://music.163.com/api/v1/song/detail',
                     `c=${encodeURIComponent(JSON.stringify([{ id: songId }]))}&ids=${encodeURIComponent(JSON.stringify([songId]))}`,
@@ -946,21 +884,9 @@ class MusicService {
                 detail = detailRes.data?.songs?.[0] || song;
             } catch (e) {}
         }
-        // 获取热评（优先代理）
+        // 获取热评
         let hotComment = '';
-        if (apiUrl) {
-            try {
-                const proxyCommentRes = await axios.get(`${apiUrl}/comment/hot`,
-                    { params: { id: songId, type: 0, limit: 1 }, headers: { 'Cookie': cookie }, timeout: 5000 }
-                );
-                const hotComments = proxyCommentRes.data?.hotComments;
-                if (hotComments?.length > 0) {
-                    hotComment = hotComments[0].content || '';
-                    if (hotComment.length > 80) hotComment = hotComment.substring(0, 77) + '...';
-                }
-            } catch (e) {}
-        }
-        if (!hotComment && cookie) {
+        if (cookie) {
             try {
                 const commentRes = await axios.get(`https://music.163.com/api/v1/resource/comments/R_SO_4_${songId}`,
                     { params: { rid: `R_SO_4_${songId}`, offset: 0, total: true, limit: 1 }, headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'Referer': 'https://music.163.com', 'Cookie': cookie }, timeout: 5000 }
