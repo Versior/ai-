@@ -50,9 +50,9 @@ class PlatformService {
     async getUserPlaylistsNetease(uid) {
         if (!this.cookie) return [];
         try {
-            const res = await axios.get(`${this.baseUrl}/user/playlist`, {
+            const res = await axios.get(`${this.baseUrl}/api/user/playlist`, {
                 params: { uid, limit: 100 },
-                headers: this.getHeaders(),
+                headers: { ...this.getHeaders(), 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15' },
                 timeout: 10000
             });
             return res.data?.playlist || [];
@@ -62,9 +62,9 @@ class PlatformService {
     async getPlaylistDetailNetease(playlistId) {
         if (!this.cookie) return null;
         try {
-            const res = await axios.get(`${this.baseUrl}/playlist/detail`, {
-                params: { id: playlistId },
-                headers: this.getHeaders(),
+            const res = await axios.get(`${this.baseUrl}/api/v6/playlist/detail`, {
+                params: { id: playlistId, n: 1000 },
+                headers: { ...this.getHeaders(), 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15' },
                 timeout: 10000
             });
             return res.data?.playlist || null;
@@ -74,12 +74,12 @@ class PlatformService {
     async getRecentSongsNetease(uid) {
         if (!this.cookie) return [];
         try {
-            const res = await axios.get(`${this.baseUrl}/user/record`, {
+            const res = await axios.get(`${this.baseUrl}/api/v1/user/playrecord`, {
                 params: { uid, type: 1, limit: 50 },
-                headers: this.getHeaders(),
+                headers: { ...this.getHeaders(), 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15' },
                 timeout: 10000
             });
-            return (res.data?.list || []).map(item => ({
+            return (res.data?.data?.list || []).map(item => ({
                 name: item.song?.name || '',
                 artist: item.song?.ar?.map(a => a.name).join(', ') || '',
                 playCount: item.playCount || 0,
@@ -312,7 +312,7 @@ class PlatformService {
                 return { success: false, error: 'Cookie 格式不正确，请确保包含 qm_keyst 或 qqmusic_key' };
             }
             // 用 Cookie 获取用户歌单来验证有效性
-            const plRes = await axios.get('http://iwenwiki.com:3000/user/playlist', {
+            const plRes = await axios.get('https://c.y.qq.com/rsc/fbin/fcg_get_profile_homepage.fcg', {
                 params: { uid: uin.replace(/^o0*/, '') || 0, limit: 5 },
                 headers: { 'Cookie': cookie },
                 timeout: 10000
@@ -329,7 +329,7 @@ class PlatformService {
     async getUserPlaylistsQQMusic(uid) {
         if (!this.cookie) return [];
         try {
-            const res = await axios.get('http://iwenwiki.com:3000/user/playlist', {
+            const res = await axios.get('https://c.y.qq.com/rsc/fbin/fcg_get_profile_homepage.fcg', {
                 params: { uid, limit: 100 },
                 headers: { 'Cookie': this.cookie },
                 timeout: 10000
@@ -341,7 +341,7 @@ class PlatformService {
     async getPlaylistDetailQQMusic(playlistId) {
         if (!this.cookie) return null;
         try {
-            const res = await axios.get('http://iwenwiki.com:3000/playlist/detail', {
+            const res = await axios.get('https://c.y.qq.com/qzone/fcg-bin/fcg_ucc_getcdinfo_byids_cp.fcg', {
                 params: { id: playlistId },
                 headers: { 'Cookie': this.cookie },
                 timeout: 10000
@@ -353,7 +353,7 @@ class PlatformService {
     async getRecentSongsQQMusic(uid) {
         if (!this.cookie) return [];
         try {
-            const res = await axios.get('http://iwenwiki.com:3000/user/record', {
+            const res = await axios.get('https://c.y.qq.com/v8/fcg-bin/fcg_v8_playlist_history.fcg', {
                 params: { uid, type: 1, limit: 50 },
                 headers: { 'Cookie': this.cookie },
                 timeout: 10000
@@ -370,7 +370,7 @@ class PlatformService {
     async getLikedSongsQQMusic(uid) {
         if (!this.cookie) return [];
         try {
-            const res = await axios.get('http://iwenwiki.com:3000/song/like/get', {
+            const res = await axios.get('https://c.y.qq.com/fav/fcgi-bin/fcg_get_profile_order_asset.fcg', {
                 params: { uid },
                 headers: { 'Cookie': this.cookie },
                 timeout: 10000
@@ -387,7 +387,7 @@ class PlatformService {
     async checkCookieQQMusic() {
         if (!this.cookie) { this.cookieValid = false; return false; }
         try {
-            const res = await axios.get('http://iwenwiki.com:3000/user/account', {
+            const res = await axios.get('https://c.y.qq.com/rsc/fbin/fcg_get_profile_homepage.fcg', {
                 headers: { 'Cookie': this.cookie }, timeout: 5000
             });
             this.cookieValid = !!(res.data?.profile || res.data?.account);
@@ -503,9 +503,9 @@ class PlatformService {
     async searchSong(songName) {
         try {
             console.log(`🔍 搜索歌曲: ${songName}`);
-            const searchResponse = await axios.get(`${this.baseUrl}/search`, {
-                params: { keywords: songName, limit: 3 },
-                headers: this.getHeaders(),
+            const searchResponse = await axios.get(`${this.baseUrl}/api/search/get`, {
+                params: { keywords: songName, limit: 3, type: 1 },
+                headers: { ...this.getHeaders(), 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15' },
                 timeout: 15000
             });
             const songs = searchResponse.data.result?.songs;
@@ -517,24 +517,24 @@ class PlatformService {
                 try {
                     const songId = song.id;
                     // 获取播放链接
-                    const urlResponse = await axios.get(`${this.baseUrl}/song/url/v1`, {
-                        params: { id: songId, level: 'standard' },
-                        headers: this.getHeaders(),
+                    const urlResponse = await axios.get(`${this.baseUrl}/api/song/enhance/player/url`, {
+                        params: { ids: JSON.stringify([songId]), br: 320000 },
+                        headers: { ...this.getHeaders(), 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15' },
                         timeout: 15000
                     });
                     let songUrl = urlResponse.data.data?.[0]?.url;
                     if (!songUrl) {
-                        const pubRes = await axios.get(`${this.baseUrl}/song/url/v1`, {
-                            params: { id: songId, level: 'standard' }, timeout: 15000
+                        const pubRes = await axios.get(`${this.baseUrl}/api/song/enhance/player/url`, {
+                            params: { ids: JSON.stringify([songId]), br: 320000 }, timeout: 15000
                         });
                         songUrl = pubRes.data.data?.[0]?.url;
                     }
                     if (!songUrl) continue; // 跳过无链接的，试下一个
 
                     // 获取详情
-                    const detailResponse = await axios.get(`${this.baseUrl}/song/detail`, {
-                        params: { ids: songId },
-                        headers: this.getHeaders(),
+                    const detailResponse = await axios.get(`${this.baseUrl}/api/v1/song/detail`, {
+                        params: { ids: `[${songId}]` },
+                        headers: { ...this.getHeaders(), 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15' },
                         timeout: 15000
                     });
                     const songDetail = detailResponse.data.songs?.[0];
@@ -543,9 +543,9 @@ class PlatformService {
                     // 获取热评
                     let hotComment = '';
                     try {
-                        const commentRes = await axios.get(`${this.baseUrl}/comment/hot`, {
-                            params: { id: songId, type: 0, limit: 1 },
-                            headers: this.getHeaders(),
+                        const commentRes = await axios.get(`${this.baseUrl}/api/v1/resource/comments/R_SO_4_${songId}`, {
+                            params: { limit: 1 },
+                            headers: { ...this.getHeaders(), 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15' },
                             timeout: 5000
                         });
                         const hotComments = commentRes.data?.hotComments;
@@ -578,17 +578,20 @@ class PlatformService {
  */
 class MusicService {
     constructor() {
-        // 第三方 API（搜索用）
-        const apiUrl = process.env.MUSIC_API_URL || 'http://iwenwiki.com:3000';
+        // 各平台官方 API
+        const neteaseUrl = 'https://music.163.com';
+        const kuwoUrl = 'https://ar.i.kuwo.cn';
+        const qqmusicUrl = 'https://u.y.qq.com';
+        const kugouUrl = 'https://www.kugou.com';
 
         // 网易云
-        this.netease = new PlatformService('netease', apiUrl, process.env.NETEASE_COOKIE || process.env.NMTID || '');
+        this.netease = new PlatformService('netease', neteaseUrl, process.env.NETEASE_COOKIE || process.env.NMTID || '');
         // 酷我
-        this.kuwo = new PlatformService('kuwo', apiUrl, process.env.KUWO_COOKIE || '');
+        this.kuwo = new PlatformService('kuwo', kuwoUrl, process.env.KUWO_COOKIE || '');
         // QQ音乐
-        this.qqmusic = new PlatformService('qqmusic', apiUrl, process.env.QQMUSIC_COOKIE || '');
+        this.qqmusic = new PlatformService('qqmusic', qqmusicUrl, process.env.QQMUSIC_COOKIE || '');
         // 酷狗
-        this.kugou = new PlatformService('kugou', apiUrl, process.env.KUGOU_COOKIE || '');
+        this.kugou = new PlatformService('kugou', kugouUrl, process.env.KUGOU_COOKIE || '');
 
         // 默认平台（用于搜索和 checkCookie）
         this.defaultPlatform = (process.env.MUSIC_SOURCE || 'netease').toLowerCase();
