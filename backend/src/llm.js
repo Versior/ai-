@@ -15,7 +15,7 @@ class LLMService {
 规则：
 1. 全程中文回复
 2. 每次回复必须是严格JSON格式，不要包含任何JSON以外的文字
-3. JSON格式：{"say":"播报词（30-50字，以歌曲和歌手为中心，分享故事情感，不要描述天气）","track":{"title":"歌曲名","artist":"歌手"},"queue":[{"title":"预告歌曲1","artist":"歌手"},{"title":"预告歌曲2","artist":"歌手"}]}
+3. JSON格式：{"say":"短播报词（20-40字，以歌曲和歌手为中心，分享故事情感，不要描述天气）","track":{"title":"歌曲名","artist":"歌手"},"queue":[{"title":"预告歌曲1","artist":"歌手"},{"title":"预告歌曲2","artist":"歌手"}]}
 4. 根据用户的音乐品味画像推荐歌曲，优先从用户收藏列表中选择，也可以推荐列表中不存在但风格相似的歌手和歌曲
 5. 推荐时要考虑用户偏好的语种、风格、歌手类型，推荐相似风格的歌曲
 6. 用户指定风格时必须严格遵守，所有推荐必须风格一致，这是最高优先级规则
@@ -172,7 +172,7 @@ class LLMService {
         }
         
         return {
-            say: data.say || "欢迎来到 Versior，听见未来电波...",
+            say: (data.say || "欢迎来到 Versior，听见未来电波...").substring(0, 100),
             track: { title: trackTitle, artist: trackArtist },
             queue: queue.slice(0, 5)
         };
