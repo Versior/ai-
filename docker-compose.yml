@@ -19,8 +19,7 @@ services:
   versior-radio:
     image: versior/ai:latest
     container_name: versior-radio
-    ports:
-      - "8834:8834"
+    network_mode: host
     volumes:
       - ./data/.env:/app/backend/.env
       - ./data/user-music-prefs.json:/app/backend/src/user-music-prefs.json
@@ -28,8 +27,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=8834
-      - MUSIC_API_URL=http://host.docker.internal:9934
-      - NETEASE_MUSIC_API_URL=http://host.docker.internal:9934
+      - MUSIC_API_URL=http://localhost:9934
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8834/health || exit 1"]

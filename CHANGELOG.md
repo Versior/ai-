@@ -1,5 +1,9 @@
 # 📋 Versior AI 电台 - 更新日志
 
+## v1.0.28 (2026-04-27)
+- 🔧 修复：MUSIC_API_URL 改为 localhost:9934（Linux 不支持 host.docker.internal）
+- 🔧 修复：versior-radio 改为 network_mode: host
+
 ## v1.0.27 (2026-04-27)
 - 🔧 修复：dotenv 改为 override: false，防止 .env 覆盖 docker-compose 环境变量
 
