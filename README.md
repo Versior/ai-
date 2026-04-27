@@ -12,6 +12,27 @@
 - 🐳 **一键部署** — Docker Compose 一键启动
 - 🌐 **公网就绪** — 内置 nginx 配置 + WebSocket 支持
 
+## 📋 版本更新
+
+### v1.0.8 (2026-04-27)
+- 🔧 修复：WS 断连后自动重连（指数退避，最多 10 次）
+- 🔧 修复：切歌在 WS 断开时用 HTTP 兜底
+- 🔧 修复：后端 API 路由支持 query string 匹配
+- 🔧 修复：前端 API 端口动态获取，不再硬编码
+- 🔧 修复：去掉前端页面中具体 AI 模型名称显示
+- ✨ 新增：底部显示版本号
+
+### v1.0.7 (2026-04-27)
+- 🔧 去掉 LONGCAT_API_URL / LONGCAT_MODEL / MUSIC_API_URL 默认值，改为必填
+- ✨ 新增：前端设置页支持修改管理员密码
+- 🔧 默认密码改为 versior123
+- 📦 Dockerfile 支持多架构构建 + GitHub Actions 自动推送
+
+### v1.0.0 (2026-04-24)
+- 🎉 初始版本发布
+
+> 完整日志见 [CHANGELOG.md](CHANGELOG.md)
+
 ## 🚀 快速开始
 
 ### 方式一：Docker 一键部署（推荐）
