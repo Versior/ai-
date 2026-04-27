@@ -1,52 +1,16 @@
 # 📋 Versior AI 电台 - 更新日志
 
-## v1.0.51 (2026-04-27)
-- 🔧 修复：AI 总结包含推荐理由+歌曲风格+适合喜好
-- 🔧 修复：提示文字改为'正在生成推荐...'
-
-## v1.0.50 (2026-04-27)
-- 🔧 修复：点击列表歌曲直接播放，同时生成 AI 总结（新增 /api/ai-summary 接口）
-- 🔧 修复：点击列表无 url 时搜索后播放并生成 AI 总结
-
-## v1.0.48 (2026-04-27)
-- 🔧 修复：预加载走 LLM 生成推荐（包含 AI 总结），不再直接从歌单随机选
-- 🔧 修复：关闭弹窗后自动播放（WS 连接后立即发 next_track，不依赖 userInteractedRef）
-- 🔧 修复：预加载搜索失败时从歌单随机选兜底
-
-## v1.0.47 (2026-04-27)
-- 🔧 修复：进入网站自动播放音乐（WS 连接后立即请求第一首，无需用户交互）
-
-## v1.0.46 (2026-04-27)
-- 🔧 修复：预加载时机改为播放到 80% 时自动触发，切歌后立即预加载下一首
+## v1.0.53 (2026-04-27)
+- 🧹 清理：删除未使用的后端文件（claude.js/context.js/login.js/musicService.js）
+- 🧹 清理：删除未使用的依赖（express/http-proxy-middleware/sqlite3）
+- 🧹 清理：删除 weapi 加密函数（aesEncrypt/rsaEncrypt/weapiEncrypt）
+- 🧹 清理：删除未调用的方法（_buildTrackInfoFromProxy/_buildTrackInfo）
+- 🧹 清理：精简 .env 配置，移除无用变量
+- 🧹 清理：docker-compose.yml 移除 MUSIC_API_URL 和 netease-api 代理
+- 📝 重写 README.md
+- 🔧 修复：AI 总结包含推荐理由+歌曲风格
+- 🔧 修复：点击列表歌曲直接播放并生成 AI 总结
+- 🔧 修复：预加载走 LLM 生成推荐
+- 🔧 修复：进入网站自动播放音乐
 - 🔧 修复：queue 从 2 首增加到 3-5 首
-- 🔧 修复：加强 LLM 风格遵守优先级，用户指定风格时为最高优先级
-- 🔧 简化：搜索和解析全部用官方 API，移除代理（代理 /search 返回错误结果）
-- 🔧 修复：热评接口从 weapi 改为 api 路径（weapi 需要加密参数）
-- 🔧 修复：删除 PlatformService 旧 searchSong，修复 is not a function
-- 🔧 修复：getSongUrl POST body 参数修正（params → data）
-- 🔧 修复：多音质重试（br=320000 → 192000 → 128000）+ fallback 外链
-- 🔧 修复：搜索成功后打印 musicData 内容（调试用）
-- 🧹 清理：移除调试日志
-
-## v1.0.35 (2026-04-27)
-- 🔧 修复：播放链接 exhigh 音质 + fallback 外链
-- 🔧 修复：新增 /api/refresh-url 路由（URL 过期时刷新）
-- 🔧 修复：前端 onError 断点恢复播放
-- 🔧 修复：所有 track 返回值加上 id 字段
-- 🔧 修复：WS 心跳 ping-pong + 死连接清理
-
-## v1.0.0 (2026-04-24)
-- 🎉 初始版本发布
-- 🤖 AI DJ — AI 驱动，自然语言对话点歌
-- 🎨 赛博朋克 UI
-- 🎵 多平台支持（网易云、酷我、QQ音乐、酷狗）
-- 🌤️ 天气感知推荐
-- 📱 响应式设计
-
-## v1.0.47 (2026-04-27)
-- 🔧 修复：进入网站自动播放音乐（WS 连接后立即请求第一首，无需用户交互）
-
-## v1.0.48 (2026-04-27)
-- 🔧 修复：预加载走 LLM 生成推荐（包含 AI 总结），不再直接从歌单随机选
-- 🔧 修复：关闭弹窗后自动播放（WS 连接后立即发 next_track，不依赖 userInteractedRef）
-- 🔧 修复：预加载搜索失败时从歌单随机选兜底
+- 🔧 修复：热评接口从 weapi 改为 api 路径

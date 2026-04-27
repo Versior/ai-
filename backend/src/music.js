@@ -1,46 +1,10 @@
 const axios = require('axios');
 const path = require('path');
-const crypto = require('crypto');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 // ============================================================
 // 网易云 weapi 加密
 // ============================================================
-function aesEncrypt(text, key, iv) {
-    const cipher = crypto.createCipheriv('aes-128-cbc', key, iv);
-    let encrypted = cipher.update(text, 'utf8', 'base64');
-    encrypted += cipher.final('base64');
-    return encrypted;
-}
-
-function rsaEncrypt(text, modulus, exponent) {
-    // RSA 加密 (reverse text -> hex -> BigInt -> pow mod -> hex)
-    const reversed = text.split('').reverse().join('');
-    const n = BigInt('0x' + modulus);
-    const e = BigInt('0x' + exponent);
-    const m = BigInt('0x' + Buffer.from(reversed).toString('hex'));
-    const c = m ** e % n;
-    return c.toString(16).padStart(256, '0');
-}
-
-function weapiEncrypt(obj) {
-    const iv = '0102030405060708';
-    const presetKey = '0CoJUm6Qyw8W8jud';
-    const publicKey = '010001';
-    const modulus = '00e0b509f6259df8642dbc35662901497c209c0262369a56ea3b0665925c2bf1b9ee13ff4296d6141438681231376195448d82c3aa4e33d8a240bdd963187b441727a53c2c133b5dee10e5a06a72b8b2c0668d952c1b7b17247d2e8e1c2a67190413625aa1303b7f31b9705088da1f7d1e1921d31456996f1967936b31b46412bd2f36';
-
-    // 第一次 AES
-    const firstKey = presetKey;
-    const firstEnc = aesEncrypt(JSON.stringify(obj), Buffer.from(firstKey), Buffer.from(iv));
-    // 第二次 AES (random key, but we use fixed for simplicity)
-    const secondKey = '0CoJUm6Qyw8W8jud';
-    const params = aesEncrypt(firstEnc, Buffer.from(secondKey), Buffer.from(iv));
-    // RSA encrypt the key
-    const encSecKey = rsaEncrypt(secondKey, modulus, publicKey);
-
-    return { params, encSecKey };
-}
-
 /**
  * 单个音乐平台的 Service
  */
@@ -847,26 +811,6 @@ class MusicService {
      */
     /**
      * 构建歌曲信息（播放链接、详情、热评）
-     */
-    async _buildTrackInfoFromProxy(song) {
-        const songId = song.id;
-        const cookie = (this.netease && this.netease.cookie) || process.env.NETEASE_COOKIE || process.env.NMTID || '';
-        // 获取播放链接（官方 API）
-        let songUrl = '';
-        if (cookie) {
-            try {
-                const urlRes = await axios.post(
-                    'https://music.163.com/api/song/enhance/player/url',
-                    `ids=[${songId}]&br=320000`,
-                    {
-                        headers: {
-                            'Cookie': cookie.replace(/\n|\r/g, '').trim(),
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                            'Referer': 'https://music.163.com/',
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        timeout: 10000
-                    }
                 );
                 songUrl = urlRes.data?.data?.[0]?.url || '';
                 if (songUrl) songUrl = songUrl.replace('http://', 'https://');
@@ -941,18 +885,6 @@ class MusicService {
         } catch (e) {}
         return { id: songId, title: detail.name || song.name, artist: detail.ar?.[0]?.name || song.ar?.[0]?.name || '未知艺术家', url: songUrl, cover: detail.al?.picUrl || song.al?.picUrl || '', hotComment };
     }
-
-    async _buildTrackInfo(song, cookie) {
-        const songId = song.id;
-        // 获取播放链接（POST 官方 API）
-        let songUrl = '';
-        try {
-            const urlRes = await axios.post('https://music.163.com/api/song/enhance/player/url',
-                `ids=[${songId}]&br=320000`,
-                {
-                    headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'Content-Type': 'application/x-www-form-urlencoded', 'Referer': 'https://music.163.com', 'Cookie': cookie },
-                    timeout: 10000
-                }
             );
             songUrl = urlRes.data?.data?.[0]?.url || '';
             if (songUrl) songUrl = songUrl.replace('http://', 'https://');

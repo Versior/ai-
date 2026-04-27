@@ -5,14 +5,6 @@
 # 查看日志: docker compose logs -f
 # 停止:     docker compose down
 # 更新:     docker compose pull && docker compose up -d
-#
-# 多架构构建 (amd64 + arm64):
-#   docker buildx create --use --name multiarch 2>/dev/null || true
-#   docker buildx build --platform linux/amd64,linux/arm64 \
-#     -t versior/ai:latest --push .
-#
-# 注意：netease-api 代理容器需要单独启动：
-#   docker run -d --name netease-api -p 9934:3000 --restart unless-stopped binaryify/netease_cloud_music_api:latest
 # ============================================
 
 services:
@@ -27,7 +19,6 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=8834
-      - MUSIC_API_URL=http://localhost:9934
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8834/health || exit 1"]
