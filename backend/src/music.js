@@ -956,7 +956,7 @@ class MusicService {
             try {
                 const urlRes = await axios.post(
                     'https://music.163.com/api/song/enhance/player/url',
-                    `ids=[${songId}]&level=exhigh`,
+                    `ids=[${songId}]&br=320000`,
                     {
                         headers: {
                             'Cookie': cookie.replace(/\n|\r/g, '').trim(),
@@ -1127,12 +1127,22 @@ class MusicService {
      */
     async getSongUrl(songId) {
         const cookie = (this.netease && this.netease.cookie) || process.env.NETEASE_COOKIE || process.env.NMTID || '';
-        // 直接调官方 API 获取播放链接（代理的 /song/url/v1 不支持用户 Cookie 认证）
-        if (cookie) {
+        if (!cookie) {
+            console.log('  getSongUrl cookie 为空');
+            return `https://music.163.com/song/media/outer/url?id=${songId}.mp3`;
+        }
+        // 多音质重试：高 → 中 → 低 → 标准
+        const levels = [
+            { br: '320000', name: 'high' },
+            { br: '192000', name: 'medium' },
+            { br: '128000', name: 'low' },
+            { br: '999000', name: 'standard' },
+        ];
+        for (const lvl of levels) {
             try {
                 const res = await axios.post(
                     'https://music.163.com/api/song/enhance/player/url',
-                    `ids=[${songId}]&level=exhigh`,
+                    `ids=[${songId}]&br=${lvl.br}`,
                     {
                         headers: {
                             'Cookie': cookie.replace(/\n|\r/g, '').trim(),
@@ -1143,14 +1153,18 @@ class MusicService {
                         timeout: 10000
                     }
                 );
-                const url = res.data?.data?.[0]?.url;
-                if (url) return url.replace('http://', 'https://');
-                console.log(`  getSongUrl 官方API返回 null, code=${res.data?.code}`);
-            } catch (e) { console.log(`  getSongUrl 官方API失败: ${e.message}`); }
-        } else {
-            console.log('  getSongUrl cookie 为空');
+                const d = res.data?.data?.[0];
+                if (d?.url) return d.url.replace('http://', 'https://');
+                // url 为 null/undefined，记录原因
+                if (d?.code === -110) {
+                    console.log(`  getSongUrl ${lvl.name}: 需要购买 (fee=${d.fee})`);
+                    break; // 付费歌，不需要继续试
+                }
+            } catch (e) {
+                console.log(`  getSongUrl ${lvl.name} 失败: ${e.message}`);
+            }
         }
-        // Fallback: 标准免费源（部分非VIP歌可用）
+        // Fallback: 标准免费源
         return `https://music.163.com/song/media/outer/url?id=${songId}.mp3`;
     }
 }
