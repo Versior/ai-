@@ -1,6 +1,45 @@
 const axios = require('axios');
 const path = require('path');
+const crypto = require('crypto');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
+// ============================================================
+// 网易云 weapi 加密
+// ============================================================
+function aesEncrypt(text, key, iv) {
+    const cipher = crypto.createCipheriv('aes-128-cbc', key, iv);
+    let encrypted = cipher.update(text, 'utf8', 'base64');
+    encrypted += cipher.final('base64');
+    return encrypted;
+}
+
+function rsaEncrypt(text, modulus, exponent) {
+    // RSA 加密 (reverse text -> hex -> BigInt -> pow mod -> hex)
+    const reversed = text.split('').reverse().join('');
+    const n = BigInt('0x' + modulus);
+    const e = BigInt('0x' + exponent);
+    const m = BigInt('0x' + Buffer.from(reversed).toString('hex'));
+    const c = m ** e % n;
+    return c.toString(16).padStart(256, '0');
+}
+
+function weapiEncrypt(obj) {
+    const iv = '0102030405060708';
+    const presetKey = '0CoJUm6Qyw8W8jud';
+    const publicKey = '010001';
+    const modulus = '00e0b509f6259df8642dbc35662901497c209c0262369a56ea3b0665925c2bf1b9ee13ff4296d6141438681231376195448d82c3aa4e33d8a240bdd963187b441727a53c2c133b5dee10e5a06a72b8b2c0668d952c1b7b17247d2e8e1c2a67190413625aa1303b7f31b9705088da1f7d1e1921d31456996f1967936b31b46412bd2f36';
+
+    // 第一次 AES
+    const firstKey = presetKey;
+    const firstEnc = aesEncrypt(JSON.stringify(obj), Buffer.from(firstKey), Buffer.from(iv));
+    // 第二次 AES (random key, but we use fixed for simplicity)
+    const secondKey = '0CoJUm6Qyw8W8jud';
+    const params = aesEncrypt(firstEnc, Buffer.from(secondKey), Buffer.from(iv));
+    // RSA encrypt the key
+    const encSecKey = rsaEncrypt(secondKey, modulus, publicKey);
+
+    return { params, encSecKey };
+}
 
 /**
  * 单个音乐平台的 Service
@@ -503,11 +542,26 @@ class PlatformService {
     async searchSong(songName) {
         try {
             console.log(`🔍 搜索歌曲: ${songName}`);
-            const searchResponse = await axios.get(`${this.baseUrl}/api/search/get`, {
-                params: { keywords: songName, limit: 3, type: 1 },
-                headers: { ...this.getHeaders(), 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15' },
-                timeout: 15000
+            // 使用 weapi 加密搜索
+            const searchParams = weapiEncrypt({
+                s: songName,
+                limit: 3,
+                type: 1,
+                offset: 0,
+                csrf_token: ''
             });
+            const searchResponse = await axios.post(`${this.baseUrl}/weapi/search/get`, 
+                `params=${encodeURIComponent(searchParams.params)}&encSecKey=${encodeURIComponent(searchParams.encSecKey)}`,
+                {
+                    headers: {
+                        ...this.getHeaders(),
+                        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Referer': 'https://music.163.com'
+                    },
+                    timeout: 15000
+                }
+            );
             const songs = searchResponse.data.result?.songs;
             if (!songs || songs.length === 0) {
                 throw new Error(`未找到歌曲: ${songName}`);
@@ -517,37 +571,51 @@ class PlatformService {
                 try {
                     const songId = song.id;
                     // 获取播放链接
-                    const urlResponse = await axios.get(`${this.baseUrl}/api/song/enhance/player/url`, {
-                        params: { ids: JSON.stringify([songId]), br: 320000 },
-                        headers: { ...this.getHeaders(), 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15' },
-                        timeout: 15000
-                    });
+                    const urlParams = weapiEncrypt({ ids: [songId], br: 320000, csrf_token: '' });
+                    const urlResponse = await axios.post(`${this.baseUrl}/weapi/song/enhance/player/url`,
+                        `params=${encodeURIComponent(urlParams.params)}&encSecKey=${encodeURIComponent(urlParams.encSecKey)}`,
+                        {
+                            headers: { ...this.getHeaders(), 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'Content-Type': 'application/x-www-form-urlencoded', 'Referer': 'https://music.163.com' },
+                            timeout: 15000
+                        }
+                    );
                     let songUrl = urlResponse.data.data?.[0]?.url;
                     if (!songUrl) {
-                        const pubRes = await axios.get(`${this.baseUrl}/api/song/enhance/player/url`, {
-                            params: { ids: JSON.stringify([songId]), br: 320000 }, timeout: 15000
-                        });
+                        const pubParams = weapiEncrypt({ ids: [songId], br: 320000, csrf_token: '' });
+                        const pubRes = await axios.post(`${this.baseUrl}/weapi/song/enhance/player/url`,
+                            `params=${encodeURIComponent(pubParams.params)}&encSecKey=${encodeURIComponent(pubParams.encSecKey)}`,
+                            {
+                                headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'Content-Type': 'application/x-www-form-urlencoded', 'Referer': 'https://music.163.com' },
+                                timeout: 15000
+                            }
+                        );
                         songUrl = pubRes.data.data?.[0]?.url;
                     }
                     if (!songUrl) continue; // 跳过无链接的，试下一个
 
                     // 获取详情
-                    const detailResponse = await axios.get(`${this.baseUrl}/api/v1/song/detail`, {
-                        params: { ids: `[${songId}]` },
-                        headers: { ...this.getHeaders(), 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15' },
-                        timeout: 15000
-                    });
+                    const detailParams = weapiEncrypt({ c: JSON.stringify([{ id: songId }]), ids: JSON.stringify([songId]), csrf_token: '' });
+                    const detailResponse = await axios.post(`${this.baseUrl}/weapi/v1/song/detail`,
+                        `params=${encodeURIComponent(detailParams.params)}&encSecKey=${encodeURIComponent(detailParams.encSecKey)}`,
+                        {
+                            headers: { ...this.getHeaders(), 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'Content-Type': 'application/x-www-form-urlencoded', 'Referer': 'https://music.163.com' },
+                            timeout: 15000
+                        }
+                    );
                     const songDetail = detailResponse.data.songs?.[0];
                     if (!songDetail) continue;
 
                     // 获取热评
                     let hotComment = '';
                     try {
-                        const commentRes = await axios.get(`${this.baseUrl}/api/v1/resource/comments/R_SO_4_${songId}`, {
-                            params: { limit: 1 },
-                            headers: { ...this.getHeaders(), 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15' },
-                            timeout: 5000
-                        });
+                        const commentParams = weapiEncrypt({ rid: `R_SO_4_${songId}`, offset: 0, total: true, limit: 1, csrf_token: '' });
+                        const commentRes = await axios.post(`${this.baseUrl}/weapi/v1/resource/comments/R_SO_4_${songId}`,
+                            `params=${encodeURIComponent(commentParams.params)}&encSecKey=${encodeURIComponent(commentParams.encSecKey)}`,
+                            {
+                                headers: { ...this.getHeaders(), 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'Content-Type': 'application/x-www-form-urlencoded', 'Referer': 'https://music.163.com' },
+                                timeout: 5000
+                            }
+                        );
                         const hotComments = commentRes.data?.hotComments;
                         if (hotComments?.length > 0) {
                             hotComment = hotComments[0].content || '';
