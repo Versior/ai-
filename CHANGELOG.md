@@ -1,5 +1,10 @@
 # 📋 Versior AI 电台 - 更新日志
 
+## v1.0.15 (2026-04-27)
+- 🔧 修复：搜索失败后从用户歌单随机选一首能播放的歌曲
+- 🔧 修复：新增 pickRandomFromLibrary + getSongUrl 方法
+- 🔧 修复：getSongUrl 优先用代理 API，回退 weapi 加密
+
 ## v1.0.14 (2026-04-27)
 - 🔧 修复：搜索优先用 NeteaseCloudMusicApi 代理容器，回退 weapi 加密
 - 🔧 修复：docker-compose 新增 netease-api 代理容器

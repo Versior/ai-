@@ -470,7 +470,17 @@ class RadioServer {
             const weatherDesc = weatherService.getWeatherDesc(weather);
             const llmResponse = await llmService.generateResponse(text, weatherDesc);
             const trackInfo = llmResponse.track;
-            const musicData = await musicService.searchSong(trackInfo.title);
+            let musicData;
+            try {
+                musicData = await musicService.searchSong(trackInfo.title);
+            } catch (searchErr) {
+                console.log(`⚠️ 搜索失败: ${searchErr.message}，从歌单随机选一首`);
+                // 从用户歌单中随机选一首能播放的
+                musicData = await musicService.pickRandomFromLibrary();
+                if (!musicData) {
+                    throw new Error('搜索失败且歌单中无可用歌曲');
+                }
+            }
 
             const track = {
                 title: musicData.title || trackInfo.title,
@@ -509,7 +519,17 @@ class RadioServer {
             const weatherDesc = weatherService.getWeatherDesc(weather);
             const llmResponse = await llmService.generateResponse('', weatherDesc);
             const trackInfo = llmResponse.track;
-            const musicData = await musicService.searchSong(trackInfo.title);
+            let musicData;
+            try {
+                musicData = await musicService.searchSong(trackInfo.title);
+            } catch (searchErr) {
+                console.log(`⚠️ 搜索失败: ${searchErr.message}，从歌单随机选一首`);
+                // 从用户歌单中随机选一首能播放的
+                musicData = await musicService.pickRandomFromLibrary();
+                if (!musicData) {
+                    throw new Error('搜索失败且歌单中无可用歌曲');
+                }
+            }
 
             const track = {
                 title: musicData.title || trackInfo.title,

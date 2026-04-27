@@ -918,4 +918,49 @@ class MusicService {
     }
 }
 
+    /**
+     * 从用户歌单中随机选一首能播放的歌曲
+     */
+    async pickRandomFromLibrary() {
+        try {
+            const fs = require('fs');
+            const prefsPath = path.join(__dirname, 'user-music-prefs.json');
+            if (!fs.existsSync(prefsPath)) return null;
+            const tracks = JSON.parse(fs.readFileSync(prefsPath, 'utf8'));
+            if (!tracks || tracks.length === 0) return null;
+            const shuffled = tracks.sort(() => Math.random() - 0.5);
+            for (const t of shuffled.slice(0, 5)) {
+                try {
+                    const url = await this.getSongUrl(t.id);
+                    if (url) {
+                        return { title: t.name, artist: t.artist || '未知', url: url, cover: '', hotComment: '' };
+                    }
+                } catch (e) { continue; }
+            }
+            return null;
+        } catch (e) { return null; }
+    }
+
+    /**
+     * 获取歌曲播放链接
+     */
+    async getSongUrl(songId) {
+        const apiUrl = process.env.MUSIC_API_URL || '';
+        if (apiUrl) {
+            try {
+                const res = await axios.get(`${apiUrl}/song/url/v1`, { params: { id: songId, level: 'standard' }, timeout: 8000 });
+                if (res.data?.data?.[0]?.url) return res.data.data[0].url;
+            } catch (e) {}
+        }
+        try {
+            const urlParams = weapiEncrypt({ ids: [songId], br: 320000, csrf_token: '' });
+            const res = await axios.post('https://music.163.com/weapi/song/enhance/player/url',
+                `params=${encodeURIComponent(urlParams.params)}&encSecKey=${encodeURIComponent(urlParams.encSecKey)}`,
+                { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', 'Content-Type': 'application/x-www-form-urlencoded', 'Referer': 'https://music.163.com' }, timeout: 10000 }
+            );
+            return res.data?.data?.[0]?.url || null;
+        } catch (e) { return null; }
+    }
+}
+
 module.exports = new MusicService();
