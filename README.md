@@ -12,56 +12,111 @@
 - 💬 **实时聊天** — WebSocket 实时通信
 - 🎨 **赛博朋克 UI** — 霓虹色调，像素字体
 
-## 🚀 快速部署
+## 🚀 Docker 部署（推荐）
 
 ### 前置要求
 
 - Docker + Docker Compose
 - 网易云音乐 Cookie（用于搜索和播放）
 
-### 部署步骤
+### 方式一：使用 Docker Hub 镜像（最简单）
 
-1. **克隆项目**
+1. **创建数据目录和配置文件**
+
+```bash
+mkdir -p /opt/versior-radio/data
+```
+
+2. **创建 `docker-compose.yml`**
+
+```yaml
+services:
+  versior-radio:
+    image: versior/ai:latest
+    container_name: versior-radio
+    network_mode: host
+    volumes:
+      - ./data/.env:/app/backend/.env
+      - ./data/user-music-prefs.json:/app/backend/src/user-music-prefs.json
+      - ./data/logs:/app/logs
+    environment:
+      - NODE_ENV=production
+      - PORT=8834
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8834/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+```
+
+3. **创建 `data/.env`**
+
+```env
+# === LLM 配置（必填） ===
+# 支持任何兼容 OpenAI 格式的 API（LongCat、OpenAI、DeepSeek 等）
+LONGCAT_API_KEY=你的API密钥
+LONGCAT_API_URL=https://你的API地址/v1/chat/completions
+LONGCAT_MODEL=你的模型名称
+
+# === 管理员密码 ===
+ADMIN_PASSWORD=versior123
+
+# === 音乐平台配置 ===
+MUSIC_SOURCE=netease
+
+# 网易云 Cookie（必填，用于搜索/播放链接/详情/热评）
+# 获取方式：浏览器登录 music.163.com → F12 → Application → Cookies → 复制
+NETEASE_COOKIE=你的网易云Cookie
+```
+
+4. **启动服务**
+
+```bash
+cd /opt/versior-radio
+docker compose up -d
+```
+
+5. **访问电台**
+
+打开浏览器访问 `http://服务器IP:8834`
+
+### 方式二：本地构建
 
 ```bash
 git clone https://github.com/Versior/ai-.git
 cd ai-
+
+# 配置环境变量
+cp backend/.env.example backend/.env
+# 编辑 backend/.env 填写配置
+
+# 构建并启动
+docker compose up -d --build
 ```
 
-2. **配置环境变量**
-
-编辑 `backend/.env`：
-
-```env
-LONGCAT_API_KEY=你的LongCat API密钥
-NETEASE_COOKIE=你的网易云Cookie
-ADMIN_PASSWORD=你的管理员密码
-```
-
-3. **启动服务**
+### 方式三：多架构构建（amd64 + arm64）
 
 ```bash
-cd /opt/versior-radio
-docker compose up -d
+docker buildx create --use --name multiarch 2>/dev/null || true
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -t versior/ai:latest --push .
 ```
 
-4. **访问电台**
-
-打开浏览器访问 `http://服务器IP:8834`
-
-### 更新
+### 常用命令
 
 ```bash
-cd /opt/versior-radio
-docker compose pull
-docker compose down
-docker compose up -d
-```
+# 更新到最新版本
+docker compose pull && docker compose down && docker compose up -d
 
-### 查看日志
-
-```bash
+# 查看日志
 docker compose logs -f
+
+# 停止服务
+docker compose down
+
+# 重启服务
+docker compose restart
 ```
 
 ## 📁 项目结构
@@ -116,12 +171,15 @@ npm run build
 
 | 变量 | 必填 | 说明 |
 |------|------|------|
-| LONGCAT_API_KEY | ✅ | LongCat API 密钥 |
+| LONGCAT_API_KEY | ✅ | LLM API 密钥 |
+| LONGCAT_API_URL | ✅ | LLM API 地址（支持任何 OpenAI 格式） |
+| LONGCAT_MODEL | ✅ | LLM 模型名称 |
 | NETEASE_COOKIE | ✅ | 网易云音乐 Cookie |
-| LONGCAT_MODEL | ❌ | LLM 模型名称，默认 LongCat-Flash-Lite |
-| MUSIC_SOURCE | ❌ | 默认音乐平台，默认 netease |
 | ADMIN_PASSWORD | ❌ | 管理员密码，默认 versior123 |
+| MUSIC_SOURCE | ❌ | 默认音乐平台，默认 netease |
 | PORT | ❌ | 服务端口，默认 8834 |
+
+> 💡 所有 LLM 配置也可以在前端设置页面（⚙️ 配置 → 配置）中填写，无需重启服务。
 
 ## 📝 更新日志
 
