@@ -568,7 +568,13 @@ class PlatformService {
                     if (proxySongs && proxySongs.length > 0) {
                         console.log(`  ✅ 代理搜索成功: ${proxySongs.length} 首`);
                         for (const song of proxySongs.slice(0, 3)) {
-                            try { return await this._buildTrackInfoFromProxy(song, apiUrl); } catch (e) { continue; }
+                            try {
+                                const result = await this._buildTrackInfoFromProxy(song, apiUrl);
+                                return result;
+                            } catch (e) {
+                                console.log(`  ⚠️ _buildTrackInfoFromProxy 失败: ${e.message}`);
+                                continue;
+                            }
                         }
                     }
                 } catch (proxyErr) {
@@ -968,7 +974,12 @@ class MusicService {
                     }
                 );
                 songUrl = urlRes.data?.data?.[0]?.url || '';
-                if (songUrl) songUrl = songUrl.replace('http://', 'https://');
+                if (songUrl) {
+                    songUrl = songUrl.replace('http://', 'https://');
+                } else {
+                    const itemCode = urlRes.data?.data?.[0]?.code;
+                    console.log(`  _buildTrackInfoFromProxy: 官方API返回 null, item_code=${itemCode}, cookie_len=${cookie.length}`);
+                }
             } catch (e) {}
         }
         // Fallback: 标准免费源
