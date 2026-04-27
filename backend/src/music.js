@@ -923,9 +923,8 @@ class MusicService {
         let hotComment = '';
         if (cookie) {
             try {
-                const commentRes = await axios.post(`https://music.163.com/weapi/v1/resource/comments/R_SO_4_${songId}`,
-                    `rid=R_SO_4_${songId}&offset=0&total=true&limit=1&csrf_token=`,
-                    { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'Content-Type': 'application/x-www-form-urlencoded', 'Referer': 'https://music.163.com', 'Cookie': cookie }, timeout: 5000 }
+                const commentRes = await axios.get(`https://music.163.com/api/v1/resource/comments/R_SO_4_${songId}`,
+                    { params: { rid: `R_SO_4_${songId}`, offset: 0, total: true, limit: 1 }, headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'Referer': 'https://music.163.com', 'Cookie': cookie }, timeout: 5000 }
                 );
                 const hotComments = commentRes.data?.hotComments;
                 if (hotComments?.length > 0) {
@@ -966,9 +965,8 @@ class MusicService {
         } catch (e) {}
         let hotComment = '';
         try {
-            const commentRes = await axios.post(`https://music.163.com/weapi/v1/resource/comments/R_SO_4_${songId}`,
-                `rid=R_SO_4_${songId}&offset=0&total=true&limit=1&csrf_token=`,
-                { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'Content-Type': 'application/x-www-form-urlencoded', 'Referer': 'https://music.163.com', 'Cookie': cookie }, timeout: 5000 }
+            const commentRes = await axios.get(`https://music.163.com/api/v1/resource/comments/R_SO_4_${songId}`,
+                { params: { rid: `R_SO_4_${songId}`, offset: 0, total: true, limit: 1 }, headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'Referer': 'https://music.163.com', 'Cookie': cookie }, timeout: 5000 }
             );
             const hotComments = commentRes.data?.hotComments;
             if (hotComments?.length > 0) {
@@ -1010,12 +1008,8 @@ class MusicService {
         // 获取热评
         let hotComment = '';
         try {
-            const commentRes = await axios.post(`https://music.163.com/weapi/v1/resource/comments/R_SO_4_${songId}`,
-                `rid=R_SO_4_${songId}&offset=0&total=true&limit=1&csrf_token=`,
-                {
-                    headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'Content-Type': 'application/x-www-form-urlencoded', 'Referer': 'https://music.163.com', 'Cookie': cookie },
-                    timeout: 5000
-                }
+            const commentRes = await axios.get(`https://music.163.com/api/v1/resource/comments/R_SO_4_${songId}`,
+                { params: { rid: `R_SO_4_${songId}`, offset: 0, total: true, limit: 1 }, headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'Referer': 'https://music.163.com', 'Cookie': cookie }, timeout: 5000 }
             );
             const hotComments = commentRes.data?.hotComments;
             if (hotComments?.length > 0) {
