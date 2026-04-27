@@ -1,138 +1,23 @@
 # 📋 Versior AI 电台 - 更新日志
 
-## v1.0.37 (2026-04-27)
+## v1.0.46 (2026-04-27)
+- 🔧 修复：预加载时机改为播放到 80% 时自动触发，切歌后立即预加载下一首
+- 🔧 修复：queue 从 2 首增加到 3-5 首
+- 🔧 修复：加强 LLM 风格遵守优先级，用户指定风格时为最高优先级
+- 🔧 简化：搜索和解析全部用官方 API，移除代理（代理 /search 返回错误结果）
+- 🔧 修复：热评接口从 weapi 改为 api 路径（weapi 需要加密参数）
+- 🔧 修复：删除 PlatformService 旧 searchSong，修复 is not a function
 - 🔧 修复：getSongUrl POST body 参数修正（params → data）
-
-## v1.0.36 (2026-04-27)
-- 🔧 修复：WS 心跳 ping-pong + 死连接清理
+- 🔧 修复：多音质重试（br=320000 → 192000 → 128000）+ fallback 外链
+- 🔧 修复：搜索成功后打印 musicData 内容（调试用）
+- 🧹 清理：移除调试日志
 
 ## v1.0.35 (2026-04-27)
 - 🔧 修复：播放链接 exhigh 音质 + fallback 外链
 - 🔧 修复：新增 /api/refresh-url 路由（URL 过期时刷新）
 - 🔧 修复：前端 onError 断点恢复播放
 - 🔧 修复：所有 track 返回值加上 id 字段
-
-## v1.0.32 (2026-04-27)
-- 🔧 修复：搜索调试日志（cookie 前缀 + 播放链接返回值）
-
-## v1.0.31 (2026-04-27)
-- 🔧 修复：搜索调试日志（cookie + 播放链接返回值）
-
-## v1.0.30 (2026-04-27)
-- 🎨 天气板块改为赛博朋克风格（网格背景/霓虹绿/等宽字体）
-- 🎨 热评板块优化（赛博朋克风格）
-
-## v1.0.29 (2026-04-27)
-- 🔧 修复：_buildTrackInfoFromProxy 请求携带 Cookie（播放链接/详情/热评）
-
-## v1.0.28 (2026-04-27)
-- 🔧 修复：MUSIC_API_URL 改为 localhost:9934（Linux 不支持 host.docker.internal）
-- 🔧 修复：versior-radio 改为 network_mode: host
-
-## v1.0.27 (2026-04-27)
-- 🔧 修复：dotenv 改为 override: false，防止 .env 覆盖 docker-compose 环境变量
-
-## v1.0.26 (2026-04-27)
-- 🔧 修复：登录成功后 Cookie 持久化到 .env 文件
-- 🔧 修复：getSongUrl/pickRandomFromLibrary 优先用 this.netease.cookie
-
-## v1.0.25 (2026-04-27)
-- 🔧 修复：播放链接/歌曲详情/热评接口全部改为 POST
-
-## v1.0.24 (2026-04-27)
-- 🔧 修复：天气信息显示格式优化（一行显示，去掉重复图标）
-
-## v1.0.23 (2026-04-27)
-- 🔧 修复：去掉 this.netease.cookie 依赖，改用环境变量 NETEASE_COOKIE / NMTID
-
-## v1.0.22 (2026-04-27)
-- 🔧 修复：搜索方法 this.netease 防御性检查 + 调试日志
-
-## v1.0.21 (2026-04-27)
-- 🔧 修复：搜索接口改用 POST（NeteaseCloudMusicApi /search 只支持 POST）
-
-## v1.0.20 (2026-04-27)
-- 🔧 修复：搜索接口路径 /search -> /cloudsearch（NeteaseCloudMusicApi 正确接口）
-
-## v1.0.19 (2026-04-27)
-- 🔧 恢复：NeteaseCloudMusicApi 代理容器（最优方案）
-- 🔧 修复：搜索优先用代理 API，失败回退歌单随机选
-- 🔧 修复：docker-compose 恢复 netease-api 服务
-
-## v1.0.18 (2026-04-27)
-- 🔧 修复：完全去掉 NeteaseCloudMusicApi 代理容器依赖
-- 🔧 修复：搜索/播放链接/详情/热评全部改用 POST 官方 API（只需 Cookie）
-- 🔧 修复：pickRandomFromLibrary 从歌单随机选 10 首尝试
-
-## v1.0.17 (2026-04-27)
-- 🔧 修复：getSongUrl 改用 POST 官方 API（不需要加密，只需 Cookie）
-- 🔧 修复：搜索多重重试：代理 API → 官方 POST → weapi 加密
-- 🔧 修复：前端重新构建打包
-
-## v1.0.16 (2026-04-27)
-- 🔧 修复：pickRandomFromLibrary 方法移到 MusicService 类内部（修复语法错误）
-
-## v1.0.15 (2026-04-27)
-- 🔧 修复：搜索失败后从用户歌单随机选一首能播放的歌曲
-- 🔧 修复：新增 pickRandomFromLibrary + getSongUrl 方法
-- 🔧 修复：getSongUrl 优先用代理 API，回退 weapi 加密
-
-## v1.0.14 (2026-04-27)
-- 🔧 修复：搜索优先用 NeteaseCloudMusicApi 代理容器，回退 weapi 加密
-- 🔧 修复：docker-compose 新增 netease-api 代理容器
-- 🔧 修复：前端 WS 天气消息加日志
-
-## v1.0.13 (2026-04-27)
-- 🔧 修复：网易云搜索/播放链接/详情/热评全部改为 weapi 加密接口
-- 🔧 修复：AES-128-CBC + RSA 加密实现，不再依赖第三方代理
-
-## v1.0.12 (2026-04-27)
-- 🔧 修复：天气数据通过 WS 发送给前端（之前只给 LLM 用，没传给前端）
-- 🔧 修复：前端 dj_broadcast/dj_response 处理天气数据
-
-## v1.0.11 (2026-04-27)
-- 🔧 修复：登录状态显示逻辑（success/error 分开显示，自动刷新不触发错误提示）
-- 🔧 修复：切换平台时清空该平台登录状态
-- 🔧 修复：refreshMusicStatus 不再把后端 error 存入状态
-
-## v1.0.10 (2026-04-27)
-- 🔧 修复：网易云所有接口改为官方移动端 API（不再依赖第三方代理）
-- 🔧 修复：QQ 音乐接口改为官方 API
-- 🔧 修复：各平台 baseUrl 改为各自官方域名
-- ⚠️ 注意：第三方 API iwenwiki.com:3000 已下线，全部替换
-
-## v1.0.9 (2026-04-27)
-- 🔧 修复：网易云登录状态显示（前端判断字段从 loggedIn 改为 success）
-- 🔧 修复：后端登录接口返回 loggedIn 字段
-- 🔧 修复：README 添加版本更新日志
-
-## v1.0.8 (2026-04-27)
-- 🔧 修复：WS 断连后自动重连（指数退避，最多 10 次）
-- 🔧 修复：切歌在 WS 断开时用 HTTP 兜底（`/api/next` 接口）
-- 🔧 修复：后端 API 路由支持 query string 匹配
-- 🔧 修复：`serveStatic` 只处理 GET 请求，POST 返回 405
-- 🔧 修复：前端 API 端口动态获取，不再硬编码 8834
-- 🔧 修复：去掉前端页面中 LongCat 具体模型名称显示
-- ✨ 新增：底部显示版本号
-- 📦 Docker 镜像改为官方 `node:20-alpine` 基础镜像
-
-## v1.0.7 (2026-04-27)
-- 🔧 去掉 `LONGCAT_API_URL`、`LONGCAT_MODEL`、`MUSIC_API_URL` 默认值，改为必填
-- ✨ 新增：前端设置页「🔑 密码」Tab，支持修改管理员密码
-- ✨ 新增：后端 `/api/change-password` 接口
-- 🔧 默认密码改为 `versior123`
-- 📦 Dockerfile 支持 buildx 多架构（amd64 + arm64）
-- 📦 新增 GitHub Actions 自动构建多架构镜像
-
-## v1.0.6 (2026-04-26)
-- 🔧 放弃 Vite dev server，改用生产构建由后端统一服务
-- 🔧 修复：登录接口支持所有平台
-- 🔧 修复：音乐平台登录状态刷新
-
-## v1.0.5 (2026-04-25)
-- 🔧 修复：网易云 Cookie 登录
-- 🔧 修复：前端播放列表点击搜索
-- 🔧 修复：进度条拖动冲突
+- 🔧 修复：WS 心跳 ping-pong + 死连接清理
 
 ## v1.0.0 (2026-04-24)
 - 🎉 初始版本发布
@@ -141,23 +26,3 @@
 - 🎵 多平台支持（网易云、酷我、QQ音乐、酷狗）
 - 🌤️ 天气感知推荐
 - 📱 响应式设计
-
-## v1.0.42 (2026-04-27)
-- 🔧 修复：搜索优先用官方 API，代理作为备选（代理 /search 返回错误结果）
-- 🔧 修复：热评接口从 weapi 改为 api 路径（weapi 需要加密参数）
-- 🔧 修复：删除 PlatformService 旧 searchSong，修复 is not a function
-- 🧹 清理：移除调试日志
-
-## v1.0.43 (2026-04-27)
-- 🔧 修复：解析歌曲（播放链接/详情/热评）优先用代理，备选官方 API
-- 🔧 修复：搜索用官方 API，不用代理（代理 /search 返回错误结果）
-
-## v1.0.44 (2026-04-27)
-- 🔧 简化：搜索和解析全部用官方 API，移除代理（代理 /search 返回错误结果）
-
-## v1.0.45 (2026-04-27)
-- 🔧 修复：queue 从 2 首增加到 3-5 首
-- 🔧 修复：加强 LLM 风格遵守优先级，用户指定风格时为最高优先级
-
-## v1.0.46 (2026-04-27)
-- 🔧 修复：预加载时机改为播放到 80% 时自动触发，切歌后立即预加载下一首
