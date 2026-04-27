@@ -542,59 +542,32 @@ class PlatformService {
     async searchSong(songName) {
         try {
             console.log(`🔍 搜索歌曲: ${songName}`);
-            // 优先用代理 API（NeteaseCloudMusicApi）
-            const apiUrl = process.env.MUSIC_API_URL || '';
-            if (apiUrl) {
-                try {
-                    const proxyRes = await axios.get(`${apiUrl}/search`, {
-                        params: { keywords: songName, limit: 3 },
-                        timeout: 10000
-                    });
-                    const proxySongs = proxyRes.data?.result?.songs;
-                    if (proxySongs && proxySongs.length > 0) {
-                        console.log(`  ✅ 代理搜索成功: ${proxySongs.length} 首`);
-                        return this._parseSearchResult(proxySongs[0], apiUrl);
-                    }
-                } catch (proxyErr) {
-                    console.log(`  ⚠️ 代理搜索失败: ${proxyErr.message}`);
+            const cookie = this.netease.cookie || process.env.NETEASE_COOKIE || process.env.NMTID || '';
+            // 直接 POST 官方搜索 API（不需要加密，需要 Cookie）
+            const searchRes = await axios.post('https://music.163.com/api/search/get',
+                `keywords=${encodeURIComponent(songName)}&limit=5&type=1&offset=0`,
+                {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Referer': 'https://music.163.com',
+                        'Cookie': cookie
+                    },
+                    timeout: 15000
                 }
-            }
-            // 回退：直接 POST 官方搜索 API（不需要加密）
-            try {
-                const cookie = this.netease.cookie || process.env.NETEASE_COOKIE || process.env.NMTID || '';
-                const searchRes = await axios.post('https://music.163.com/api/search/get',
-                    `keywords=${encodeURIComponent(songName)}&limit=3&type=1&offset=0`,
-                    {
-                        headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', 'Content-Type': 'application/x-www-form-urlencoded', 'Referer': 'https://music.163.com', 'Cookie': cookie },
-                        timeout: 15000
-                    }
-                );
-                if (searchRes.data?.code === 200 && searchRes.data?.result?.songs?.length > 0) {
-                    console.log(`  ✅ 官方搜索成功: ${searchRes.data.result.songs.length} 首`);
-                    return this._parseSearchResult(searchRes.data.result.songs[0], '');
-                }
-            } catch (e) {
-                console.log(`  ⚠️ 官方搜索失败: ${e.message}`);
-            }
-            // 最终回退：weapi 加密搜索
-            try {
-                const searchParams = weapiEncrypt({ s: songName, limit: 3, type: 1, offset: 0, csrf_token: '' });
-                const searchResponse = await axios.post(`${this.baseUrl}/weapi/search/get`,
-                    `params=${encodeURIComponent(searchParams.params)}&encSecKey=${encodeURIComponent(searchParams.encSecKey)}`,
-                    { headers: { ...this.getHeaders(), 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', 'Content-Type': 'application/x-www-form-urlencoded', 'Referer': 'https://music.163.com' }, timeout: 15000 }
-                );
-                const songs = searchResponse.data.result?.songs;
-                if (songs && songs.length > 0) {
-                    console.log(`  ✅ weapi 搜索成功: ${songs.length} 首`);
-                    return this._parseSearchResult(songs[0], '');
-                }
-            } catch (e) {
-                console.log(`  ⚠️ weapi 搜索失败: ${e.message}`);
-            }
-            const songs = [];
-            if (!songs || songs.length === 0) {
+            );
+            if (searchRes.data?.code !== 200 || !searchRes.data?.result?.songs?.length) {
                 throw new Error(`未找到歌曲: ${songName}`);
             }
+            const songs = searchRes.data.result.songs;
+            console.log(`  ✅ 搜索成功: ${songs.length} 首`);
+            // 尝试多个结果，找到有播放链接的
+            for (const song of songs.slice(0, 3)) {
+                try {
+                    return await this._buildTrackInfo(song, cookie);
+                } catch (e) { continue; }
+            }
+            throw new Error(`搜索失败: ${songName}`);
             // 尝试多个搜索结果，跳过无播放链接的
             for (const song of songs.slice(0, 3)) {
                 try {
@@ -940,15 +913,73 @@ class MusicService {
     /**
      * 从用户歌单中随机选一首能播放的歌曲
      */
+    /**
+     * 构建歌曲信息（播放链接、详情、热评）
+     */
+    async _buildTrackInfo(song, cookie) {
+        const songId = song.id;
+        // 获取播放链接（POST 官方 API）
+        let songUrl = '';
+        try {
+            const urlRes = await axios.post('https://music.163.com/api/song/enhance/player/url',
+                `ids=[${songId}]&br=320000`,
+                {
+                    headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'Content-Type': 'application/x-www-form-urlencoded', 'Referer': 'https://music.163.com', 'Cookie': cookie },
+                    timeout: 10000
+                }
+            );
+            songUrl = urlRes.data?.data?.[0]?.url || '';
+            if (songUrl) songUrl = songUrl.replace('http://', 'https://');
+        } catch (e) {}
+        if (!songUrl) throw new Error('无播放链接');
+        // 获取详情
+        let detail = song;
+        try {
+            const detailRes = await axios.post('https://music.163.com/api/v1/song/detail',
+                `c=${encodeURIComponent(JSON.stringify([{ id: songId }]))}&ids=${encodeURIComponent(JSON.stringify([songId]))}`,
+                {
+                    headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'Content-Type': 'application/x-www-form-urlencoded', 'Referer': 'https://music.163.com', 'Cookie': cookie },
+                    timeout: 10000
+                }
+            );
+            detail = detailRes.data?.songs?.[0] || song;
+        } catch (e) {}
+        // 获取热评
+        let hotComment = '';
+        try {
+            const commentRes = await axios.post(`https://music.163.com/weapi/v1/resource/comments/R_SO_4_${songId}`,
+                `rid=R_SO_4_${songId}&offset=0&total=true&limit=1&csrf_token=`,
+                {
+                    headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'Content-Type': 'application/x-www-form-urlencoded', 'Referer': 'https://music.163.com', 'Cookie': cookie },
+                    timeout: 5000
+                }
+            );
+            const hotComments = commentRes.data?.hotComments;
+            if (hotComments?.length > 0) {
+                hotComment = hotComments[0].content || '';
+                if (hotComment.length > 80) hotComment = hotComment.substring(0, 77) + '...';
+            }
+        } catch (e) {}
+        return {
+            title: detail.name || song.name,
+            artist: detail.ar?.[0]?.name || song.ar?.[0]?.name || '未知艺术家',
+            url: songUrl,
+            cover: detail.al?.picUrl || song.al?.picUrl || '',
+            hotComment
+        };
+    }
+
     async pickRandomFromLibrary() {
         try {
             const fs = require('fs');
+            const cookie = this.netease.cookie || process.env.NETEASE_COOKIE || process.env.NMTID || '';
             const prefsPath = path.join(__dirname, 'user-music-prefs.json');
             if (!fs.existsSync(prefsPath)) return null;
             const tracks = JSON.parse(fs.readFileSync(prefsPath, 'utf8'));
             if (!tracks || tracks.length === 0) return null;
+            // 随机选 10 首尝试
             const shuffled = tracks.sort(() => Math.random() - 0.5);
-            for (const t of shuffled.slice(0, 5)) {
+            for (const t of shuffled.slice(0, 10)) {
                 try {
                     const url = await this.getSongUrl(t.id);
                     if (url) {

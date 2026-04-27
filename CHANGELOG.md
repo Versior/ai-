@@ -1,5 +1,10 @@
 # 📋 Versior AI 电台 - 更新日志
 
+## v1.0.18 (2026-04-27)
+- 🔧 修复：完全去掉 NeteaseCloudMusicApi 代理容器依赖
+- 🔧 修复：搜索/播放链接/详情/热评全部改用 POST 官方 API（只需 Cookie）
+- 🔧 修复：pickRandomFromLibrary 从歌单随机选 10 首尝试
+
 ## v1.0.17 (2026-04-27)
 - 🔧 修复：getSongUrl 改用 POST 官方 API（不需要加密，只需 Cookie）
 - 🔧 修复：搜索多重重试：代理 API → 官方 POST → weapi 加密

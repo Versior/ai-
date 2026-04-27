@@ -14,6 +14,8 @@
 
 ## 📋 版本更新
 
+- 🔧 修复：完全去掉 NeteaseCloudMusicApi 代理容器依赖，改用 Cookie 直接调用官方 API
+
 ### v1.0.17 (2026-04-27)
 - 🔧 修复：getSongUrl 改用 POST 官方 API（不需要加密，只需 Cookie）
 - 🔧 修复：搜索多重重试：代理 API → 官方 POST → weapi 加密
@@ -65,27 +67,16 @@
 
 ### 方式一：Docker 一键部署（推荐）
 
-#### 1. 部署 NeteaseCloudMusicApi 代理（必须，用于搜索和播放链接）
+#### 1. 配置网易云 Cookie（必须，用于搜索和播放链接）
 
-网易云音乐搜索/播放链接 API 需要加密，推荐部署一个代理容器：
+网易云音乐搜索/播放链接需要 Cookie 认证。在设置页面登录网易云账号即可自动获取。
 
-```bash
-# 拉取镜像
-docker pull binaryify/netease-cloud-music-api:latest
-
-# 启动代理容器
-docker run -d \
-  --name netease-api \
-  -p 3000:3000 \
-  --restart unless-stopped \
-  binaryify/netease-cloud-music-api:latest
-
-# 验证代理是否正常
-curl "http://localhost:3000/status"
-curl "http://localhost:3000/search?keywords=周杰伦&limit=3"
+也可以在 `.env` 中手动配置：
+```
+NETEASE_COOKIE=你的网易云 Cookie
 ```
 
-> 如果服务器无法拉取 Docker Hub 镜像，可以用 GitHub Actions 构建后推送到私有仓库，或在本地构建后 `docker save` 传到服务器。
+> 获取方法：浏览器登录 music.163.com → F12 → Network → 任意请求 → Cookie 值
 
 #### 2. 部署 Versior AI 电台
 
