@@ -8,6 +8,7 @@ import {
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
+const APP_VERSION = '1.0.8';
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -851,7 +852,7 @@ export default function App() {
 
             {/* 底部 */}
             <div className={`px-6 py-4 flex justify-between text-[10px] tracking-[0.2em] text-gray-600 font-mono uppercase ${isDark ? 'bg-[#0d0d12]' : 'bg-gray-100'} border-t ${brd}`}>
-              <span>Versior FM</span>
+              <span>Versior FM <span className="text-gray-700">v{APP_VERSION}</span></span>
               <span className={wsConnected ? 'text-[#2ee4a6]' : 'text-gray-600'}>{wsConnected ? '已连接' : '已断开'}</span>
             </div>
           </div>
