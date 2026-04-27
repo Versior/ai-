@@ -941,11 +941,13 @@ class MusicService {
     async _buildTrackInfoFromProxy(song, apiUrl) {
         const songId = song.id;
         const cookie = (this.netease && this.netease.cookie) || process.env.NETEASE_COOKIE || process.env.NMTID || '';
+        console.log(`  DEBUG cookie: ${cookie ? 'YES(' + cookie.substring(0, 30) + '...)' : 'EMPTY'}`);
         const headers = cookie ? { 'Cookie': cookie, 'Content-Type': 'application/x-www-form-urlencoded' } : { 'Content-Type': 'application/x-www-form-urlencoded' };
         // 获取播放链接
         let songUrl = '';
         try {
             const urlRes = await axios.post(`${apiUrl}/song/url/v1`, `id=${songId}&level=standard`, { headers: headers, timeout: 10000 });
+            console.log(`  DEBUG urlRes: code=${urlRes.data?.code} url=${urlRes.data?.data?.[0]?.url?.substring(0,50) || 'null'}`);
             songUrl = urlRes.data?.data?.[0]?.url || '';
         } catch (e) {}
         if (!songUrl) throw new Error('无播放链接');
