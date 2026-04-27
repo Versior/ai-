@@ -1,5 +1,10 @@
 # 📋 Versior AI 电台 - 更新日志
 
+## v1.0.17 (2026-04-27)
+- 🔧 修复：getSongUrl 改用 POST 官方 API（不需要加密，只需 Cookie）
+- 🔧 修复：搜索多重重试：代理 API → 官方 POST → weapi 加密
+- 🔧 修复：前端重新构建打包
+
 ## v1.0.16 (2026-04-27)
 - 🔧 修复：pickRandomFromLibrary 方法移到 MusicService 类内部（修复语法错误）
 

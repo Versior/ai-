@@ -14,6 +14,10 @@
 
 ## 📋 版本更新
 
+### v1.0.17 (2026-04-27)
+- 🔧 修复：getSongUrl 改用 POST 官方 API（不需要加密，只需 Cookie）
+- 🔧 修复：搜索多重重试：代理 API → 官方 POST → weapi 加密
+
 ### v1.0.15 (2026-04-27)
 - 🔧 修复：搜索失败后从用户歌单随机选歌（374首已登录用户歌单可用）
 
@@ -61,21 +65,58 @@
 
 ### 方式一：Docker 一键部署（推荐）
 
+#### 1. 部署 NeteaseCloudMusicApi 代理（必须，用于搜索和播放链接）
+
+网易云音乐搜索/播放链接 API 需要加密，推荐部署一个代理容器：
+
+```bash
+# 拉取镜像
+docker pull binaryify/netease-cloud-music-api:latest
+
+# 启动代理容器
+docker run -d \
+  --name netease-api \
+  -p 3000:3000 \
+  --restart unless-stopped \
+  binaryify/netease-cloud-music-api:latest
+
+# 验证代理是否正常
+curl "http://localhost:3000/status"
+curl "http://localhost:3000/search?keywords=周杰伦&limit=3"
+```
+
+> 如果服务器无法拉取 Docker Hub 镜像，可以用 GitHub Actions 构建后推送到私有仓库，或在本地构建后 `docker save` 传到服务器。
+
+#### 2. 部署 Versior AI 电台
+
 ```bash
 # 1. 克隆项目
-git clone <your-repo-url>
+git clone https://github.com/Versior/ai-.git
 cd versior-radio
 
 # 2. 配置环境变量
 cp backend/.env.example data/.env
 # 编辑 data/.env，填入 API Key 和管理员密码
 
-# 3. 一键启动
+# 3. 一键启动（会自动连接 netease-api 代理）
 docker compose up -d
 
 # 4. 访问
 # 内网: http://localhost:8834
+# 或通过反向代理用域名访问
 ```
+
+#### 3. 配置说明
+
+`docker-compose.yml` 中 `MUSIC_API_URL` 环境变量指向代理容器：
+
+```yaml
+environment:
+  - MUSIC_API_URL=http://netease-api:3000
+```
+
+如果代理容器和电台容器在同一 docker 网络中，用 `netease-api` 主机名即可。
+如果分开部署，改为实际 IP：`http://192.168.0.xxx:3000`。
 
 ### 方式二：手动部署
 
