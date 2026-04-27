@@ -338,6 +338,27 @@ class RadioServer {
                 return;
             }
 
+            // 刷新播放链接（URL 过期时调用）
+            if (reqPath === '/api/refresh-url' && req.method === 'GET') {
+                try {
+                    const queryStart = req.url.indexOf('?');
+                    const params = new URLSearchParams(queryStart >= 0 ? req.url.substring(queryStart) : '');
+                    const songId = params.get('id');
+                    if (!songId) {
+                        res.writeHead(400, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ success: false, error: '缺少 id 参数' }));
+                        return;
+                    }
+                    const url = await musicService.getSongUrl(songId);
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ success: true, url: url }));
+                } catch (e) {
+                    res.writeHead(500, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ success: false, error: e.message }));
+                }
+                return;
+            }
+
             // 搜索歌曲
             if (req.url.startsWith('/api/search') && req.method === 'GET') {
                 try {
@@ -500,6 +521,7 @@ class RadioServer {
             }
 
             const track = {
+                id: musicData.id || trackInfo.id || 0,
                 title: musicData.title || trackInfo.title,
                 artist: musicData.artist || trackInfo.artist,
                 url: musicData.url,
@@ -549,6 +571,7 @@ class RadioServer {
             }
 
             const track = {
+                id: musicData.id || trackInfo.id || 0,
                 title: musicData.title || trackInfo.title,
                 artist: musicData.artist || trackInfo.artist,
                 url: musicData.url,
@@ -598,6 +621,7 @@ class RadioServer {
                         const musicData = await musicService.searchSong(randomTrack.name + ' ' + randomTrack.artist);
                         if (musicData && musicData.url) {
                             fastTrack = {
+                                id: musicData.id || 0,
                                 title: musicData.title || randomTrack.name,
                                 artist: musicData.artist || randomTrack.artist,
                                 url: musicData.url,
@@ -626,6 +650,7 @@ class RadioServer {
                 const musicData = await musicService.searchSong(trackInfo.title);
 
                 this.preloadedTrack = {
+                    id: musicData.id || trackInfo.id || 0,
                     title: musicData.title || trackInfo.title,
                     artist: musicData.artist || trackInfo.artist,
                     url: musicData.url,

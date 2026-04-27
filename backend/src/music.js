@@ -950,20 +950,31 @@ class MusicService {
     async _buildTrackInfoFromProxy(song, apiUrl) {
         const songId = song.id;
         const cookie = (this.netease && this.netease.cookie) || process.env.NETEASE_COOKIE || process.env.NMTID || '';
-        console.log(`  _buildTrackInfoFromProxy: cookie=${cookie ? cookie.substring(0,30)+'...' : 'EMPTY'} apiUrl=${apiUrl}`);
-        // 获取播放链接（直接调官方 API，代理的 /song/url/v1 需要特定 Cookie 格式）
+        // 获取播放链接（直接调官方 API + exhigh 音质 + fallback）
         let songUrl = '';
         if (cookie) {
             try {
-                const urlRes = await axios.post('https://music.163.com/api/song/enhance/player/url',
-                    `ids=[${songId}]&br=320000`,
-                    { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'Content-Type': 'application/x-www-form-urlencoded', 'Referer': 'https://music.163.com', 'Cookie': cookie }, timeout: 10000 }
-                );
+                const urlRes = await axios({
+                    method: 'POST',
+                    url: 'https://music.163.com/api/song/enhance/player/url',
+                    params: { id: songId, level: 'exhigh' },
+                    headers: {
+                        'Cookie': cookie.replace(/\n|\r/g, '').trim(),
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                        'Referer': 'https://music.163.com/',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    timeout: 10000
+                });
                 songUrl = urlRes.data?.data?.[0]?.url || '';
                 if (songUrl) songUrl = songUrl.replace('http://', 'https://');
             } catch (e) {}
         }
-        if (!songUrl) throw new Error('无播放链接');
+        // Fallback: 标准免费源
+        if (!songUrl) {
+            songUrl = `https://music.163.com/song/media/outer/url?id=${songId}.mp3`;
+            console.log(`  _buildTrackInfoFromProxy: 使用 fallback URL for ${songId}`);
+        }
         // 获取详情
         let detail = song;
         if (cookie) {
@@ -991,6 +1002,7 @@ class MusicService {
             } catch (e) {}
         }
         return {
+            id: songId,
             title: detail.name || song.name,
             artist: detail.ar?.[0]?.name || song.ar?.[0]?.name || '未知艺术家',
             url: songUrl.replace('http://', 'https://'),
@@ -1031,7 +1043,7 @@ class MusicService {
                 if (hotComment.length > 80) hotComment = hotComment.substring(0, 77) + '...';
             }
         } catch (e) {}
-        return { title: detail.name || song.name, artist: detail.ar?.[0]?.name || song.ar?.[0]?.name || '未知艺术家', url: songUrl, cover: detail.al?.picUrl || song.al?.picUrl || '', hotComment };
+        return { id: songId, title: detail.name || song.name, artist: detail.ar?.[0]?.name || song.ar?.[0]?.name || '未知艺术家', url: songUrl, cover: detail.al?.picUrl || song.al?.picUrl || '', hotComment };
     }
 
     async _buildTrackInfo(song, cookie) {
@@ -1101,7 +1113,7 @@ class MusicService {
                 try {
                     const url = await this.getSongUrl(t.id);
                     if (url) {
-                        return { title: t.name, artist: t.artist || '未知', url: url, cover: '', hotComment: '' };
+                        return { id: t.id, title: t.name, artist: t.artist || '未知', url: url, cover: '', hotComment: '' };
                     }
                 } catch (e) { continue; }
             }
@@ -1117,18 +1129,27 @@ class MusicService {
         // 直接调官方 API 获取播放链接（代理的 /song/url/v1 不支持用户 Cookie 认证）
         if (cookie) {
             try {
-                const res = await axios.post('https://music.163.com/api/song/enhance/player/url',
-                    `ids=[${songId}]&br=320000`,
-                    { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'Content-Type': 'application/x-www-form-urlencoded', 'Referer': 'https://music.163.com', 'Cookie': cookie }, timeout: 10000 }
-                );
+                const res = await axios({
+                    method: 'POST',
+                    url: 'https://music.163.com/api/song/enhance/player/url',
+                    params: { id: songId, level: 'exhigh' },
+                    headers: {
+                        'Cookie': cookie.replace(/\n|\r/g, '').trim(),
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                        'Referer': 'https://music.163.com/',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    timeout: 10000
+                });
                 const url = res.data?.data?.[0]?.url;
                 if (url) return url.replace('http://', 'https://');
-                console.log(`  getSongUrl 官方API返回 null, code=${res.data?.code}, cookie=${cookie.substring(0,30)}...`);
+                console.log(`  getSongUrl 官方API返回 null, code=${res.data?.code}`);
             } catch (e) { console.log(`  getSongUrl 官方API失败: ${e.message}`); }
         } else {
             console.log('  getSongUrl cookie 为空');
         }
-        return null;
+        // Fallback: 标准免费源（部分非VIP歌可用）
+        return `https://music.163.com/song/media/outer/url?id=${songId}.mp3`;
     }
 }
 

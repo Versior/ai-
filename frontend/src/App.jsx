@@ -8,7 +8,7 @@ import {
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.0.34';
+const APP_VERSION = '1.0.35';
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -29,6 +29,8 @@ export default function App() {
   const [inputText, setInputText] = useState('');
   const [systemMessage, setSystemMessage] = useState('Versior 核心系统已上线。音频矩阵正在预热。接下来需要播放什么？');
   const [currentTrack, setCurrentTrack] = useState({ title: '비행운', artist: 'MoonMoon', cover: '', url: '' });
+  const currentTrackRef = useRef(currentTrack);
+  useEffect(() => { currentTrackRef.current = currentTrack; }, [currentTrack]);
   const [queue, setQueue] = useState([
     { title: '비행운', artist: 'MoonMoon', active: true },
     { title: "Creepin'", artist: 'Tabber, Paul Blanco, MISO', active: false },
@@ -167,11 +169,11 @@ export default function App() {
             if (data.type === 'dj_broadcast') {
               if (data.say) setSystemMessage(data.say);
               if (data.track) doPlayTrack(data.track);
-              if (data.queue) setQueue(data.queue);
+              setQueue(Array.isArray(data.queue) ? data.queue : []);
               if (data.weather) { console.log('🌤️ 收到天气:', JSON.stringify(data.weather)); setWeather(data.weather); }
             } else if (data.type === 'dj_response') {
               if (data.say) setSystemMessage(data.say);
-              if (data.queue) setQueue(data.queue);
+              setQueue(Array.isArray(data.queue) ? data.queue : []);
               if (data.track) doPlayTrack(data.track);
               if (data.weather) { console.log('🌤️ 收到天气:', JSON.stringify(data.weather)); setWeather(data.weather); }
             } else if (data.type === 'weather_update') {
@@ -303,6 +305,38 @@ export default function App() {
         preloadSentRef.current = false;
       }
     }
+  };
+
+  const handleAudioError = async (e) => {
+    const audioEl = e.target;
+    const error = audioEl.error;
+    const track = currentTrackRef.current;
+    // error.code === 4 代表媒体资源获取失败（URL 过期/403/跨域）
+    if (error && error.code === 4 && track?.id) {
+      console.warn('⚠️ 播放链接失效，尝试刷新 URL...');
+      const brokenTime = audioEl.currentTime;
+      try {
+        const response = await fetch(`/api/refresh-url?id=${track.id}`);
+        const data = await response.json();
+        if (data.url) {
+          console.log('✅ 获取新链接，恢复播放...');
+          setCurrentTrack(prev => ({ ...prev, url: data.url }));
+          setTimeout(() => {
+            if (audioRef.current) {
+              audioRef.current.currentTime = brokenTime;
+              audioRef.current.play().catch(err => console.error('恢复播放失败:', err));
+            }
+          }, 500);
+          return;
+        }
+      } catch (err) {
+        console.error('❌ 刷新 URL 失败:', err);
+      }
+    }
+    // 其他错误或刷新失败，执行原有跳过逻辑
+    console.error('❌ 音频加载错误');
+    setSystemMessage('音频加载失败，尝试下一首...');
+    setTimeout(() => handleSkipForward(), 2000);
   };
 
   const onTrackEnd = () => { setIsPlaying(false); handleSkipForward(); };
@@ -494,7 +528,7 @@ export default function App() {
         input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #2ee4a6; cursor: grab; border: 3px solid #111116; box-shadow: 0 0 8px rgba(46,228,166,0.5); }
       `}</style>
 
-      <audio ref={audioRef} onTimeUpdate={onTimeUpdate} onEnded={onTrackEnd} onLoadedMetadata={() => { if (audioRef.current) { setDuration(audioRef.current.duration); } }} onError={() => { console.error('❌ 音频加载错误'); setSystemMessage('音频加载失败，尝试下一首...'); setTimeout(() => handleSkipForward(), 2000); }} preload="auto" />
+      <audio ref={audioRef} onTimeUpdate={onTimeUpdate} onEnded={onTrackEnd} onLoadedMetadata={() => { if (audioRef.current) { setDuration(audioRef.current.duration); } }} onError={handleAudioError} preload="auto" />
 
       {/* ===== 弹窗 ===== */}
       {showIntro && (
