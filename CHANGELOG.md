@@ -1,5 +1,10 @@
 # 📋 Versior AI 电台 - 更新日志
 
+## v1.0.54 (2026-04-27)
+- 🔧 优化：LLM 配置改为前端可自定义（API URL/Key/模型名称）
+- 🔧 优化：.env 改为空模板，用户自行填写
+- 🔧 优化：配置页面添加说明文字
+
 ## v1.0.53 (2026-04-27)
 - 🧹 清理：删除未使用的后端文件（claude.js/context.js/login.js/musicService.js）
 - 🧹 清理：删除未使用的依赖（express/http-proxy-middleware/sqlite3）

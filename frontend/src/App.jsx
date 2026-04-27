@@ -8,7 +8,7 @@ import {
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.0.53';
+const APP_VERSION = '1.0.54';
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -654,9 +654,10 @@ export default function App() {
                 {/* 配置 */}
                 {settingsTab === 'config' && (
                   <div className="space-y-3">
-                    <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">API URL</label><input value={settingsConfig.LONGCAT_API_URL || ''} onChange={e => setSettingsConfig(p => ({ ...p, LONGCAT_API_URL: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono" /></div>
-                    <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">API Key</label><input value={settingsConfig.LONGCAT_API_KEY || ''} onChange={e => setSettingsConfig(p => ({ ...p, LONGCAT_API_KEY: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono" /></div>
-                    <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">模型</label><input value={settingsConfig.LONGCAT_MODEL || ''} onChange={e => setSettingsConfig(p => ({ ...p, LONGCAT_MODEL: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono" /></div>
+                    <div className="text-[10px] text-gray-500 mb-2">配置 AI 模型接口，支持任何兼容 OpenAI 格式的 API（如 LongCat、OpenAI、DeepSeek 等）</div>
+                    <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">API URL（如 https://api.openai.com/v1/chat/completions）</label><input value={settingsConfig.LONGCAT_API_URL || ''} onChange={e => setSettingsConfig(p => ({ ...p, LONGCAT_API_URL: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono" /></div>
+                    <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">API Key</label><p className="text-[9px] text-gray-600 mt-0.5">你的 API 密钥</p><input value={settingsConfig.LONGCAT_API_KEY || ''} onChange={e => setSettingsConfig(p => ({ ...p, LONGCAT_API_KEY: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono" /></div>
+                    <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">模型名称</label><p className="text-[9px] text-gray-600 mt-0.5">如 LongCat-Flash-Lite、gpt-4o、deepseek-chat 等</p><input value={settingsConfig.LONGCAT_MODEL || ''} onChange={e => setSettingsConfig(p => ({ ...p, LONGCAT_MODEL: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono" /></div>
                     <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">音乐 API URL</label><input value={settingsConfig.MUSIC_API_URL || ''} onChange={e => setSettingsConfig(p => ({ ...p, MUSIC_API_URL: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono" /></div>
                     <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">音乐源</label>
                       <select value={settingsConfig.MUSIC_SOURCE || 'netease'} onChange={e => setSettingsConfig(p => ({ ...p, MUSIC_SOURCE: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono">
