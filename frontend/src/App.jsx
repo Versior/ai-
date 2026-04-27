@@ -8,7 +8,7 @@ import {
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.0.47';
+const APP_VERSION = '1.0.48';
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -122,16 +122,28 @@ export default function App() {
   const handleCloseIntro = useCallback(() => {
     setShowIntro(false);
     userInteractedRef.current = true;
-    // 如果音频已加载但没播放（WS 提前连上了），直接播放
-    setTimeout(() => {
+    // 等待 WS 连接后自动播放第一首
+    const tryPlay = () => {
       if (audioRef.current && audioRef.current.src && audioRef.current.paused) {
         audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
-      } else if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && !audioRef.current?.src) {
-        // 如果 WS 已连接但还没开始播放，主动请求第一首
+        return true;
+      }
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && !audioRef.current?.src) {
         wsRef.current.send(JSON.stringify({ type: 'command', action: 'next_track' }));
         setSystemMessage('Versior 正在为你挑选第一首...');
+        return true;
       }
-    }, 500);
+      return false;
+    };
+    // 立即尝试一次
+    if (!tryPlay()) {
+      // WS 还没连上，等连接成功后自动播放
+      const checkInterval = setInterval(() => {
+        if (tryPlay()) clearInterval(checkInterval);
+      }, 300);
+      // 最多等 5 秒
+      setTimeout(() => clearInterval(checkInterval), 5000);
+    }
   }, []);
 
   // === 缩放 ===

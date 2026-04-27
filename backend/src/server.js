@@ -634,59 +634,33 @@ class RadioServer {
         console.log('⏳ 预加载下一首...');
 
         try {
-            // 快速路径：如果用户有偏好歌曲，先直接从偏好里随机选一首
-            // 这样预加载不需要等 LLM，秒级完成
-            const prefsPath = path.join(__dirname, 'user-music-prefs.json');
-            let fastTrack = null;
-            if (fs.existsSync(prefsPath)) {
-                const prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf8'));
-                if (prefs.length > 0) {
-                    const randomTrack = prefs[Math.floor(Math.random() * prefs.length)];
-                    // 搜索这首歌获取 URL
-                    try {
-                        const musicData = await musicService.searchSong(randomTrack.name + ' ' + randomTrack.artist);
-                        if (musicData && musicData.url) {
-                            fastTrack = {
-                                id: musicData.id || 0,
-                                title: musicData.title || randomTrack.name,
-                                artist: musicData.artist || randomTrack.artist,
-                                url: musicData.url,
-                                cover: musicData.cover,
-                                hotComment: musicData.hotComment
-                            };
-                        }
-                    } catch (e) {
-                        console.warn('快速预加载搜索失败，回退到 LLM');
-                    }
-                }
+            // 预加载：走 LLM 生成推荐（包含 AI 总结和 queue）
+            const weather = await weatherService.getWeather(clientIP || '127.0.0.1');
+            const weatherDesc = weatherService.getWeatherDesc(weather);
+            const llmResponse = await llmService.generateResponse('', weatherDesc);
+            const trackInfo = llmResponse.track;
+
+            let musicData;
+            try {
+                musicData = await musicService.searchSong(trackInfo.title);
+            } catch (searchErr) {
+                // 搜索失败时从歌单随机选
+                console.log(`⚠️ 预加载搜索失败: ${searchErr.message}，从歌单随机选`);
+                musicData = await musicService.pickRandomFromLibrary();
+                if (!musicData) throw new Error('预加载失败');
             }
 
-            if (fastTrack) {
-                // 快速路径成功
-                this.preloadedTrack = fastTrack;
-                this.preloadedSay = `为你推荐 ${fastTrack.title}，来自你的歌单`;
-                this.preloadedQueue = [];
-                console.log('✅ 快速预加载完成:', fastTrack.title);
-            } else {
-                // 回退到 LLM 路径
-                const weather = await weatherService.getWeather(clientIP || '127.0.0.1');
-                const weatherDesc = weatherService.getWeatherDesc(weather);
-                const llmResponse = await llmService.generateResponse('', weatherDesc);
-                const trackInfo = llmResponse.track;
-                const musicData = await musicService.searchSong(trackInfo.title);
-
-                this.preloadedTrack = {
-                    id: musicData.id || trackInfo.id || 0,
-                    title: musicData.title || trackInfo.title,
-                    artist: musicData.artist || trackInfo.artist,
-                    url: musicData.url,
-                    cover: musicData.cover,
-                    hotComment: musicData.hotComment
-                };
-                this.preloadedSay = llmResponse.say;
-                this.preloadedQueue = llmResponse.queue || [];
-                console.log('✅ LLM 预加载完成:', this.preloadedTrack.title);
-            }
+            this.preloadedTrack = {
+                id: musicData?.id || trackInfo.id || 0,
+                title: musicData?.title || trackInfo.title,
+                artist: musicData?.artist || trackInfo.artist,
+                url: musicData?.url || '',
+                cover: musicData?.cover || '',
+                hotComment: musicData?.hotComment || ''
+            };
+            this.preloadedSay = llmResponse.say;
+            this.preloadedQueue = llmResponse.queue || [];
+            console.log('✅ 预加载完成:', this.preloadedTrack.title);
 
             this.broadcast({
                 type: 'preload_ready',
