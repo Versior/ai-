@@ -8,7 +8,7 @@ import {
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.0.23';
+const APP_VERSION = '1.0.24';
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -566,7 +566,7 @@ export default function App() {
                     </div>
                     {weather && (
                       <div className="flex justify-between items-center pt-1">
-                        <div><h3 className="text-[13px] text-gray-200 tracking-wider">天气</h3><p className="text-[10px] text-gray-500 mt-1">{weather.city} {weather.condition} {weather.temp}</p></div>
+                        <div><h3 className="text-[13px] text-gray-200 tracking-wider">天气</h3><p className="text-[10px] text-gray-500 mt-1">{weather.city} {weather.condition} {weather.temp}</p><p className="text-[10px] text-gray-500">体感 {weather.feelsLike} · {weather.humidity} · {weather.wind}</p></div>
                         {getWeatherIcon(weather.condition)}
                       </div>
                     )}
@@ -749,11 +749,7 @@ export default function App() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-[#2ee4a6]/10 flex items-center justify-center">{getWeatherIcon(weather.condition)}</div>
-                    <div><p className={`text-xs font-bold ${t1}`}>{weather.city} {weather.condition}</p><p className="text-[10px] text-gray-500">{weather.temp} 体感 {weather.feelsLike}</p></div>
-                  </div>
-                  <div className="hidden sm:flex items-center gap-4 text-[10px] text-gray-500">
-                    <span className="flex items-center gap-1"><Droplets className="w-3 h-3" /> {weather.humidity}</span>
-                    <span className="flex items-center gap-1"><Wind className="w-3 h-3" /> {weather.wind}</span>
+                    <div><p className={`text-xs font-bold ${t1}`}>{weather.city} {weather.condition} {weather.temp}</p><p className="text-[10px] text-gray-500">体感 {weather.feelsLike} · {weather.humidity} · {weather.wind}</p></div>
                   </div>
                 </div>
               </div>
