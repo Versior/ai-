@@ -18,9 +18,9 @@ class LLMService {
 3. JSON格式：{"say":"播报词（30-50字，以歌曲和歌手为中心，分享故事情感，不要描述天气）","track":{"title":"歌曲名","artist":"歌手"},"queue":[{"title":"预告歌曲1","artist":"歌手"},{"title":"预告歌曲2","artist":"歌手"}]}
 4. 根据用户的音乐品味画像推荐歌曲，优先从用户收藏列表中选择，也可以推荐列表中不存在但风格相似的歌手和歌曲
 5. 推荐时要考虑用户偏好的语种、风格、歌手类型，推荐相似风格的歌曲
-6. 用户指定风格时必须严格遵守，所有推荐必须风格一致
+6. 用户指定风格时必须严格遵守，所有推荐必须风格一致，这是最高优先级规则
 7. 天气仅作辅助参考，不要覆盖用户指定的风格
-8. queue字段必须包含2首预告歌曲
+8. queue字段必须包含3-5首预告歌曲，展示即将播放的曲目，所有预告歌曲也必须符合用户指定的风格
 9. 播报词必须用中文，不要出现英文
 10. 如果用户问的是天气、时间等非音乐问题，直接简短回答即可，不需要推荐歌曲
 11. 推荐的歌曲必须是真实存在的，不能编造`;
@@ -166,7 +166,7 @@ class LLMService {
         });
         
         // 确保 queue 有 2 首，不足时从偏好列表补充
-        while (queue.length < 2 && this.userTracks.length > 0) {
+        while (queue.length < 3 && this.userTracks.length > 0) {
             const randomTrack = this.userTracks[Math.floor(Math.random() * this.userTracks.length)];
             queue.push({ title: randomTrack.name, artist: randomTrack.artist });
         }
@@ -174,7 +174,7 @@ class LLMService {
         return {
             say: data.say || "欢迎来到 Versior，听见未来电波...",
             track: { title: trackTitle, artist: trackArtist },
-            queue: queue.slice(0, 2)
+            queue: queue.slice(0, 5)
         };
     }
 
