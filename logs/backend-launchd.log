@@ -9941,3 +9941,14 @@ AI 响应: {
 🧠 LLM 原始返回: {"say":"这首《Snooze (Acoustic)》是SZA与Justin Bieber的深情二重唱，原曲以慵懒R&B风格讲述深夜思念，而Acoustic版本更突出两人嗓音的细腻交织。","track":{"title":"Snooze (Acoustic)","artist":"SZA, Justin Bieber"},"queue":[{"title":"Crybaby","artist
 ✅ JSON 解析成功: Snooze - Devin Kennedy
 🔍 搜索歌曲: Snooze
+◇ injected env (18) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+◇ injected env (0) from .env // tip: ⌘ suppress logs { quiet: true }
+📂 已加载 374 首用户偏好歌曲
+◇ injected env (0) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+◇ injected env (0) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+🎵 Versior AI 电台已启动
+   HTTP + WS: http://0.0.0.0:8834
+   静态文件:  /Users/versior/.openclaw/workspace/versior-radio/frontend/dist
+   环境:      development
+

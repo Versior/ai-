@@ -85,19 +85,66 @@ class RadioServer {
                 const status = { status: 'ok', clients: this.clients.size, llm: null, music: null };
                 try {
                     const llmRes = await axios.post(
-                        process.env.LONGCAT_API_URL || 'https://api.longcat.chat/openai/v1/chat/completions',
-                        { model: process.env.LONGCAT_MODEL || 'LongCat-Flash-Lite', messages: [{ role: 'user', content: 'hi' }], max_tokens: 5 },
+                        process.env.LONGCAT_API_URL || '',
+                        { model: process.env.LONGCAT_MODEL || '', messages: [{ role: 'user', content: 'hi' }], max_tokens: 5 },
                         { headers: { 'Authorization': `Bearer ${process.env.LONGCAT_API_KEY || ''}`, 'Content-Type': 'application/json' }, timeout: 20000 }
                     );
                     status.llm = (llmRes.status >= 200 && llmRes.status < 500);
                 } catch (e) { status.llm = false; }
                 try {
-                    const apiUrl = process.env.MUSIC_API_URL || 'http://iwenwiki.com:3000';
+                    const apiUrl = process.env.MUSIC_API_URL || '';
                     const musicRes = await axios.get(`${apiUrl}/search?keywords=test&limit=1`, { timeout: 8000 });
                     status.music = (musicRes.status >= 200 && musicRes.status < 500);
                 } catch (e) { status.music = false; }
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify(status));
+                return;
+            }
+
+            // 修改密码（需要旧密码）
+            if (req.url === '/api/change-password' && req.method === 'POST') {
+                let body = '';
+                req.on('data', chunk => body += chunk);
+                req.on('end', async () => {
+                    try {
+                        const data = JSON.parse(body);
+                        const { oldPassword, newPassword } = data;
+                        if (!oldPassword || !newPassword) {
+                            res.writeHead(400);
+                            res.end(JSON.stringify({ success: false, error: '缺少参数' }));
+                            return;
+                        }
+                        if (oldPassword !== (process.env.ADMIN_PASSWORD || 'versior123')) {
+                            res.writeHead(401);
+                            res.end(JSON.stringify({ success: false, error: '旧密码错误' }));
+                            return;
+                        }
+                        if (newPassword.length < 4) {
+                            res.writeHead(400);
+                            res.end(JSON.stringify({ success: false, error: '新密码至少4位' }));
+                            return;
+                        }
+                        // 更新 .env 文件
+                        const envPath = path.join(__dirname, '..', '.env');
+                        let envContent = '';
+                        if (fs.existsSync(envPath)) {
+                            envContent = fs.readFileSync(envPath, 'utf8');
+                        }
+                        const regex = /^ADMIN_PASSWORD=.*$/m;
+                        if (regex.test(envContent)) {
+                            envContent = envContent.replace(regex, `ADMIN_PASSWORD=${newPassword}`);
+                        } else {
+                            envContent += `\nADMIN_PASSWORD=${newPassword}`;
+                        }
+                        fs.writeFileSync(envPath, envContent.trim() + '\n');
+                        process.env.ADMIN_PASSWORD = newPassword;
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ success: true }));
+                    } catch (e) {
+                        res.writeHead(500);
+                        res.end(JSON.stringify({ success: false, error: e.message }));
+                    }
+                });
                 return;
             }
 
@@ -108,8 +155,8 @@ class RadioServer {
                     success: true,
                     config: {
                         LONGCAT_API_URL: process.env.LONGCAT_API_URL || '',
-                        LONGCAT_MODEL: process.env.LONGCAT_MODEL || 'LongCat-Flash-Lite',
-                        MUSIC_API_URL: process.env.MUSIC_API_URL || 'http://iwenwiki.com:3000',
+                        LONGCAT_MODEL: process.env.LONGCAT_MODEL || '',
+                        MUSIC_API_URL: process.env.MUSIC_API_URL || '',
                         MUSIC_SOURCE: process.env.MUSIC_SOURCE || 'netease'
                     }
                 }));
@@ -124,7 +171,7 @@ class RadioServer {
                     try {
                         const data = JSON.parse(body);
                         const { password, config } = data;
-                        if (!password || password !== (process.env.ADMIN_PASSWORD || 'admin')) {
+                        if (!password || password !== (process.env.ADMIN_PASSWORD || 'versior123')) {
                             res.writeHead(401);
                             res.end(JSON.stringify({ success: false, error: '密码错误' }));
                             return;
@@ -142,9 +189,9 @@ class RadioServer {
                                     'PORT=8834',
                                     'ADMIN_PASSWORD=' + (process.env.ADMIN_PASSWORD || 'change_me'),
                                     'LONGCAT_API_KEY=',
-                                    'LONGCAT_API_URL=https://api.longcat.chat/openai/v1/chat/completions',
-                                    'LONGCAT_MODEL=LongCat-Flash-Lite',
-                                    'MUSIC_API_URL=http://iwenwiki.com:3000',
+                                    'LONGCAT_API_URL=',
+                                    'LONGCAT_MODEL=',
+                                    'MUSIC_API_URL=',
                                     'MUSIC_SOURCE=netease'
                                 ].join('\n') + '\n';
                             }

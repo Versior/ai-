@@ -52,20 +52,22 @@ services:
 
 ### 3. 创建配置文件
 
-创建 `data/.env`：
+创建 `data/.env`（**所有必填项必须填写，无默认值**）：
 
 ```env
 NODE_ENV=production
 PORT=8834
 ADMIN_PASSWORD=你的管理员密码
 
-LONGCAT_API_KEY=你的LongCat API Key
-LONGCAT_API_URL=https://api.longcat.chat/openai/v1/chat/completions
-LONGCAT_MODEL=LongCat-Flash-Lite
+LONGCAT_API_KEY=你的LongCat API Key（必填）
+LONGCAT_API_URL=AI API 地址（必填）
+LONGCAT_MODEL=AI 模型名称（必填）
 
-MUSIC_API_URL=http://iwenwiki.com:3000
+MUSIC_API_URL=音乐搜索 API 地址（必填）
 MUSIC_SOURCE=netease
 ```
+
+> ⚠️ `LONGCAT_API_URL`、`LONGCAT_MODEL`、`MUSIC_API_URL` 三项**没有默认值**，必须手动填写，否则服务无法正常工作。
 
 ### 4. 启动
 
@@ -78,7 +80,7 @@ docker compose up -d
 
 ```bash
 docker compose logs -f
-curl http://localhost:7734
+curl http://localhost:7734/health
 ```
 
 访问 `http://服务器IP:7734` 即可使用。
@@ -95,6 +97,32 @@ curl http://localhost:7734
 | 查看日志 | `docker compose logs -f` |
 | 更新镜像 | `docker compose pull && docker compose up -d` |
 | 进入容器 | `docker exec -it versior-radio sh` |
+
+---
+
+## 多架构镜像构建
+
+镜像支持 `linux/amd64` 和 `linux/arm64`（树莓派 / Apple Silicon 等）。
+
+### 构建并推送多架构镜像
+
+```bash
+# 登录 Docker Hub
+docker login
+
+# 创建 buildx 构建器（首次）
+docker buildx create --use --name multiarch 2>/dev/null || true
+
+# 构建 + 推送 amd64 + arm64
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -t versior/ai:latest --push .
+```
+
+### 仅构建当前架构（本地测试）
+
+```bash
+docker build -t versior/ai:latest .
+```
 
 ---
 

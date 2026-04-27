@@ -1,9 +1,23 @@
 # ============================================
-# Versior AI 电台 - Docker 构建
-# 单端口部署：后端 serve 前端静态文件
+# Versior AI 电台 - Docker 多架构构建
+# 支持 amd64 / arm64
+# ============================================
+#
+# 用法:
+#   本地构建当前架构:
+#     docker build -t versior/ai:latest .
+#
+#   构建并推送多架构镜像 (需先 docker login):
+#     docker buildx create --use --name multiarch 2>/dev/null || true
+#     docker buildx build --platform linux/amd64,linux/arm64 \
+#       -t versior/ai:latest --push .
+#
+#   仅构建不推送 (导出到本地):
+#     docker buildx build --platform linux/amd64,linux/arm64 \
+#       -t versior/ai:latest --load .
 # ============================================
 
-FROM node:20-alpine AS builder
+FROM --platform=$BUILDPLATFORM node:20-alpine AS builder
 
 WORKDIR /app
 

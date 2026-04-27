@@ -1,8 +1,15 @@
 # ============================================
 # Versior AI 电台 - Docker Compose
+#
 # 一键部署: docker compose up -d
 # 查看日志: docker compose logs -f
 # 停止:     docker compose down
+# 更新:     docker compose pull && docker compose up -d
+#
+# 多架构构建 (amd64 + arm64):
+#   docker buildx create --use --name multiarch 2>/dev/null || true
+#   docker buildx build --platform linux/amd64,linux/arm64 \
+#     -t versior/ai:latest --push .
 # ============================================
 
 services:

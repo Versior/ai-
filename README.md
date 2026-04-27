@@ -102,9 +102,9 @@ versior-radio/
 | `PORT` | 否 | 8834 | 服务端口 |
 | `ADMIN_PASSWORD` | 是 | - | 管理员密码 |
 | `LONGCAT_API_KEY` | 是 | - | AI API Key |
-| `LONGCAT_API_URL` | 否 | longcat.chat | AI API 地址 |
-| `LONGCAT_MODEL` | 否 | LongCat-Flash-Lite | AI 模型 |
-| `MUSIC_API_URL` | 否 | iwenwiki.com:3000 | 音乐搜索 API |
+| `LONGCAT_API_URL` | 是 | - | AI API 地址（**无默认值，必须填写**） |
+| `LONGCAT_MODEL` | 是 | - | AI 模型（**无默认值，必须填写**） |
+| `MUSIC_API_URL` | 是 | - | 音乐搜索 API（**无默认值，必须填写**） |
 | `MUSIC_SOURCE` | 否 | netease | 默认音乐源 |
 | `NETEASE_COOKIE` | 否 | - | 网易云 Cookie |
 
@@ -142,6 +142,25 @@ docker compose up -d
 # 访问: https://your-domain.com
 ```
 
+## 🐳 多架构 Docker 构建
+
+镜像支持 `linux/amd64` 和 `linux/arm64`（树莓派 / Apple Silicon）。
+
+```bash
+# 登录 Docker Hub
+docker login
+
+# 创建 buildx 构建器（首次）
+docker buildx create --use --name multiarch 2>/dev/null || true
+
+# 构建 + 推送 amd64 + arm64
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -t versior/ai:latest --push .
+
+# 仅构建当前架构（本地测试）
+docker build -t versior/ai:latest .
+```
+
 ## 🔧 开发
 
 ```bash
@@ -157,12 +176,14 @@ cd frontend && npm run build
 
 ## 📝 注意事项
 
-1. **首次使用**：需要配置 AI API Key（在 .env 或前端设置页面）
-2. **音乐平台登录**：在设置页面「音乐登录」Tab 配置
-3. **网易云/酷我**：支持账号密码或 Cookie 登录
-4. **QQ音乐/酷狗**：仅支持 Cookie 登录
-5. **音频播放**：浏览器直接请求 CDN，无需代理
-6. **WebSocket**：自动适配 HTTP/HTTPS
+1. **首次使用**：需要配置 AI API Key、API URL、模型名称和音乐 API（在 .env 或前端设置页面）
+2. **必填项无默认值**：`LONGCAT_API_URL`、`LONGCAT_MODEL`、`MUSIC_API_URL` 必须手动填写
+3. **管理员密码**：默认 `versior123`，首次登录后请在设置页「密码」Tab 修改
+4. **音乐平台登录**：在设置页面「音乐登录」Tab 配置
+5. **网易云/酷我**：支持账号密码或 Cookie 登录
+6. **QQ音乐/酷狗**：仅支持 Cookie 登录
+7. **音频播放**：浏览器直接请求 CDN，无需代理
+8. **WebSocket**：自动适配 HTTP/HTTPS
 
 ## 📄 许可证
 

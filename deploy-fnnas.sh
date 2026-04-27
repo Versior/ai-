@@ -41,7 +41,7 @@ version: '3.8'
 
 services:
   versior-radio:
-    image: versior/versior:latest
+    image: versior/ai:latest
     container_name: versior-radio
     ports:
       - "7734:8834"
@@ -74,10 +74,10 @@ PORT=8834
 ADMIN_PASSWORD=versior123
 
 LONGCAT_API_KEY=
-LONGCAT_API_URL=https://api.longcat.chat/openai/v1/chat/completions
-LONGCAT_MODEL=LongCat-Flash-Lite
+LONGCAT_API_URL=
+LONGCAT_MODEL=
 
-MUSIC_API_URL=http://iwenwiki.com:3000
+MUSIC_API_URL=
 MUSIC_SOURCE=netease
 ENV
     echo "⚠️  默认密码: versior123（请在首次登录后修改）"

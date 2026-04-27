@@ -46,6 +46,8 @@ export default function App() {
   // 设置页面
   const [settingsTab, setSettingsTab] = useState('status');
   const [settingsPassword, setSettingsPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [settingsAuthed, setSettingsAuthed] = useState(false);
   const [settingsConfig, setSettingsConfig] = useState({});
   const [settingsLoading, setSettingsLoading] = useState(false);
@@ -364,6 +366,7 @@ export default function App() {
   const handleSettingsOpen = useCallback(async () => {
     setShowSettings(true); setSettingsTab('status'); setSettingsAuthed(false);
     setSettingsPassword(''); setSettingsError(''); setSettingsSuccess('');
+    setNewPassword(''); setConfirmPassword('');
     try { const r = await fetch(`${API_BASE}/api/config`); const d = await r.json(); if (d.success) setSettingsConfig(d.config); } catch (e) {}
     checkStatus();
     refreshMusicStatus();
@@ -400,6 +403,36 @@ export default function App() {
         : setMusicLoginStatus(p => ({ ...p, [platform]: { error: data.error || '登录失败' } }));
     } catch (e) { setSettingsLoading(false); setMusicLoginStatus(p => ({ ...p, [platform]: { error: e.message } })); }
   }, [selectedPlatform, loginForm]);
+
+  const handleChangePassword = useCallback(async () => {
+    setSettingsError(''); setSettingsSuccess('');
+    if (!settingsPassword.trim()) { setSettingsError('请输入当前密码'); return; }
+    if (!newPassword.trim()) { setSettingsError('请输入新密码'); return; }
+    if (newPassword.length < 4) { setSettingsError('新密码至少4位'); return; }
+    if (newPassword !== confirmPassword) { setSettingsError('两次输入的新密码不一致'); return; }
+    setSettingsLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/change-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ oldPassword: settingsPassword, newPassword })
+      });
+      const data = await res.json();
+      setSettingsLoading(false);
+      if (data.success) {
+        setSettingsSuccess('密码修改成功！');
+        setNewPassword('');
+        setConfirmPassword('');
+        // 如果当前验证用的密码就是旧密码，更新它
+        setSettingsPassword(newPassword);
+      } else {
+        setSettingsError(data.error || '修改失败');
+      }
+    } catch (e) {
+      setSettingsLoading(false);
+      setSettingsError('修改失败: ' + e.message);
+    }
+  }, [settingsPassword, newPassword, confirmPassword]);
 
   const getWeatherIcon = (c) => {
     if (!c) return <Cloud className="w-4 h-4" />;
@@ -480,9 +513,9 @@ export default function App() {
             ) : (
               <div className="space-y-4">
                 <div className="flex gap-1 border-b border-gray-800 pb-3">
-                  {['status', 'config', 'login'].map(tab => (
+                  {['status', 'config', 'login', 'password'].map(tab => (
                     <button key={tab} onClick={() => { setSettingsTab(tab); setSettingsError(''); setSettingsSuccess(''); }} className={`text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider transition-colors ${settingsTab === tab ? 'bg-[#2ee4a6] text-black' : 'bg-gray-800 text-gray-400 hover:text-white'}`}>
-                      {tab === 'status' ? '📡 状态' : tab === 'config' ? '⚙️ 配置' : '🎵 音乐登录'}
+                      {tab === 'status' ? '📡 状态' : tab === 'config' ? '⚙️ 配置' : tab === 'login' ? '🎵 音乐登录' : '🔑 密码'}
                     </button>
                   ))}
                 </div>
@@ -607,6 +640,30 @@ export default function App() {
                         🔄 重新获取用户数据
                       </button>
                     )}
+                  </div>
+                )}
+
+                {/* 修改密码 */}
+                {settingsTab === 'password' && (
+                  <div className="space-y-3">
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-2">修改管理员密码</p>
+                    <div>
+                      <label className="text-[10px] text-gray-500 uppercase tracking-wider">当前密码</label>
+                      <input type="password" value={settingsPassword} onChange={e => setSettingsPassword(e.target.value)} placeholder="输入当前密码" className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6]" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-gray-500 uppercase tracking-wider">新密码</label>
+                      <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="输入新密码（至少4位）" className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6]" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-gray-500 uppercase tracking-wider">确认新密码</label>
+                      <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="再次输入新密码" className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6]" />
+                    </div>
+                    {settingsError && <p className="text-xs text-red-400">{settingsError}</p>}
+                    {settingsSuccess && <p className="text-xs text-[#2ee4a6]">{settingsSuccess}</p>}
+                    <button onClick={handleChangePassword} disabled={settingsLoading} className="w-full bg-[#2ee4a6] text-black font-bold py-2.5 rounded-lg hover:bg-[#20b583] transition-colors text-sm disabled:opacity-50">
+                      {settingsLoading ? '修改中...' : '确认修改密码'}
+                    </button>
                   </div>
                 )}
               </div>
