@@ -1,5 +1,17 @@
 # 📋 Versior AI 电台 - 更新日志
 
+## v1.0.37 (2026-04-27)
+- 🔧 修复：getSongUrl POST body 参数修正（params → data）
+
+## v1.0.36 (2026-04-27)
+- 🔧 修复：WS 心跳 ping-pong + 死连接清理
+
+## v1.0.35 (2026-04-27)
+- 🔧 修复：播放链接 exhigh 音质 + fallback 外链
+- 🔧 修复：新增 /api/refresh-url 路由（URL 过期时刷新）
+- 🔧 修复：前端 onError 断点恢复播放
+- 🔧 修复：所有 track 返回值加上 id 字段
+
 ## v1.0.32 (2026-04-27)
 - 🔧 修复：搜索调试日志（cookie 前缀 + 播放链接返回值）
 

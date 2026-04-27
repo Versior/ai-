@@ -954,18 +954,19 @@ class MusicService {
         let songUrl = '';
         if (cookie) {
             try {
-                const urlRes = await axios({
-                    method: 'POST',
-                    url: 'https://music.163.com/api/song/enhance/player/url',
-                    params: { id: songId, level: 'exhigh' },
-                    headers: {
-                        'Cookie': cookie.replace(/\n|\r/g, '').trim(),
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                        'Referer': 'https://music.163.com/',
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    timeout: 10000
-                });
+                const urlRes = await axios.post(
+                    'https://music.163.com/api/song/enhance/player/url',
+                    `ids=[${songId}]&level=exhigh`,
+                    {
+                        headers: {
+                            'Cookie': cookie.replace(/\n|\r/g, '').trim(),
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                            'Referer': 'https://music.163.com/',
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        timeout: 10000
+                    }
+                );
                 songUrl = urlRes.data?.data?.[0]?.url || '';
                 if (songUrl) songUrl = songUrl.replace('http://', 'https://');
             } catch (e) {}
@@ -1129,18 +1130,19 @@ class MusicService {
         // 直接调官方 API 获取播放链接（代理的 /song/url/v1 不支持用户 Cookie 认证）
         if (cookie) {
             try {
-                const res = await axios({
-                    method: 'POST',
-                    url: 'https://music.163.com/api/song/enhance/player/url',
-                    params: { id: songId, level: 'exhigh' },
-                    headers: {
-                        'Cookie': cookie.replace(/\n|\r/g, '').trim(),
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                        'Referer': 'https://music.163.com/',
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    timeout: 10000
-                });
+                const res = await axios.post(
+                    'https://music.163.com/api/song/enhance/player/url',
+                    `ids=[${songId}]&level=exhigh`,
+                    {
+                        headers: {
+                            'Cookie': cookie.replace(/\n|\r/g, '').trim(),
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                            'Referer': 'https://music.163.com/',
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        timeout: 10000
+                    }
+                );
                 const url = res.data?.data?.[0]?.url;
                 if (url) return url.replace('http://', 'https://');
                 console.log(`  getSongUrl 官方API返回 null, code=${res.data?.code}`);
