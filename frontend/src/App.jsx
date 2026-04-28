@@ -3,16 +3,16 @@ import {
   Play, Pause, SkipBack, SkipForward, Square,
   Volume2, ArrowUp, Info, Settings,
   Cloud, Sun, CloudRain, CloudSnow, Wind, Droplets,
-  Music, Radio, X, Loader
+  Music, Radio, ExternalLink, X, Loader
 } from 'lucide-react';
 import IntroModal from './components/IntroModal';
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.2.1';
+const APP_VERSION = '1.2.2';
 
 export default function App() {
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState('light');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [wsConnected, setWsConnected] = useState(false);
   const [scale, setScale] = useState(1);
