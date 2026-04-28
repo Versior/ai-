@@ -320,8 +320,8 @@ class RadioServer {
             };
 
             this.currentTrack = track;
-            this.lastSay = llmResponse.say;
-            this.lastQueue = llmResponse.queue || [];
+            this.lastSay = llmResponse?.say || `正在播放《${track.title}》`;
+            this.lastQueue = llmResponse?.queue || this.lastQueue || [];
             // 记录播放历史
             if (track.id) {
                 this.playHistory.push(String(track.id));
@@ -334,9 +334,9 @@ class RadioServer {
 
             this.broadcast({
                 type: 'dj_response',
-                say: llmResponse.say,
+                say: this.lastSay,
                 track,
-                queue: llmResponse.queue || [],
+                queue: this.lastQueue,
                 weather,
             });
         } catch (error) {
@@ -452,7 +452,7 @@ class RadioServer {
 
             this.currentTrack = track;
             this.lastSay = llmResponse?.say || `正在播放《${track.title}》`;
-            this.lastQueue = llmResponse?.queue || [];
+            this.lastQueue = llmResponse?.queue || this.lastQueue || [];
             // 记录播放历史
             if (track.id) {
                 this.playHistory.push(String(track.id));
