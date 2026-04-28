@@ -9,7 +9,7 @@ import IntroModal from './components/IntroModal';
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.3.7';
+const APP_VERSION = '1.3.8';
 
 export default function App() {
   const [theme, setTheme] = useState('light');
@@ -356,8 +356,9 @@ export default function App() {
     setVolume(v);
     if (audioRef.current) {
       audioRef.current.volume = v / 100;
-      if (v > 0 && muted) setMuted(false);
     }
+    if (v > 0) setMuted(false);
+    else setMuted(true);
   };
 
   const handleToggleMute = () => {
@@ -649,9 +650,10 @@ export default function App() {
         .halo-container::before { content: ""; position: absolute; inset: -20px; background: var(--halo-grad); background-size: 600% 600%; animation: halo-bg-rotation 20s linear infinite, halo-breathe 3s ease-in-out infinite alternate; z-index: -1; border-radius: 30px; pointer-events: none; }
         .dot-matrix-bg { background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 12px 12px; }
         input[type="range"] { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; outline: none; cursor: pointer; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #2ee4a6; cursor: grab; border: 3px solid #111116; box-shadow: 0 0 8px rgba(46,228,166,0.5); }
-        input[type="range"]::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.2); }
-        input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #2ee4a6; cursor: grab; border: 3px solid #111116; box-shadow: 0 0 8px rgba(46,228,166,0.5); }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; border-radius: 50%; background: #2ee4a6; cursor: grab; border: 2px solid #111116; box-shadow: 0 0 6px rgba(46,228,166,0.4); margin-top: -4px; }
+        input[type="range"]::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.15); }
+        input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: #2ee4a6; cursor: grab; border: 2px solid #111116; box-shadow: 0 0 6px rgba(46,228,166,0.4); }
+        input[type="range"]::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; margin-top: -2px; }
         input[type="range"]::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; }
         input[type="range"]::-moz-range-track { height: 4px; border-radius: 2px; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -938,8 +940,8 @@ export default function App() {
                   <button onClick={handleSkipForward} className={`w-8 h-8 rounded-full border ${brd} flex justify-center items-center hover:text-[#2ee4a6] hover:border-[#2ee4a6] transition-all`}><SkipForward className="w-3.5 h-3.5 fill-current" /></button>
                   <button onClick={handleStop} className={`w-8 h-8 rounded-full border ${brd} flex justify-center items-center hover:text-[#2ee4a6] hover:border-[#2ee4a6] transition-all`}><Square className="w-3.5 h-3.5 fill-current" /></button>
                   <div className={`flex items-center gap-2 ml-2 px-2 py-1 rounded-full ${isDark ? 'bg-[#1a1a21]' : 'bg-gray-200'}`}>
-                    <button onClick={handleToggleMute} className={`hover:text-[#2ee4a6] transition-colors ${volume === 0 ? 'text-red-400' : isDark ? 'text-gray-500' : 'text-gray-600'}`}>
-                      {volume === 0 ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                    <button onClick={handleToggleMute} className={`p-1 rounded-full transition-all ${muted ? 'text-red-500 bg-red-500/10' : isDark ? 'text-gray-500 hover:text-[#2ee4a6]' : 'text-gray-600 hover:text-[#2ee4a6]'}`}>
+                      {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                     </button>
                     <input type="range" min="0" max="100" value={volume} onChange={handleVolumeChange} className={`w-16 ${isDark ? 'accent-[#2ee4a6]' : 'accent-[#2ee4a6] [&::-webkit-slider-runnable-track]:bg-gray-300 [&::-webkit-slider-runnable-track]:rounded-full [&::-moz-range-track]:bg-gray-300 [&::-moz-range-track]:rounded-full'}`} />
                   </div>
