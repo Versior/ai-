@@ -94,6 +94,8 @@ class RadioServer {
         this.playHistory = []; // 最近播放的歌曲 ID，用于去重
         this.playHistoryTitles = []; // 最近播放的歌名+歌手，用于同名去重
         this.maxHistory = 20;
+        this.lastPreloadTime = 0;
+        this.preloadDebounceMs = 30000; // 30秒防抖
     }
 
     start() {
@@ -408,16 +410,24 @@ class RadioServer {
     // ============================================================
     async preloadNextTrack(clientIP) {
         if (this.isPreloading) return;
+        // 防抖：30秒内不重复预加载
+        const now = Date.now();
+        if (this.lastPreloadTime && now - this.lastPreloadTime < this.preloadDebounceMs) {
+            console.log(`⏱️ 预加载防抖跳过 (${Math.round((this.preloadDebounceMs - (now - this.lastPreloadTime)) / 1000)}s 后可用)`);
+            return;
+        }
+        this.lastPreloadTime = now;
         this.isPreloading = true;
         console.log('⏳ 预加载下一首...');
 
         try {
-            // 从当前 queue 中找下一首（跳过当前播放的）
-            const currentTitle = this.currentTrack?.title;
+            // 从当前 queue 中找下一首（跳过所有已播放过的）
             const queue = this.lastQueue || [];
+            const playedTitles = this.playHistoryTitles?.map(t => t.title?.trim().toLowerCase()) || [];
             let nextQueueTrack = null;
             for (const t of queue) {
-                if (t.title !== currentTitle) {
+                const tTitle = t.title?.trim().toLowerCase();
+                if (!playedTitles.includes(tTitle)) {
                     nextQueueTrack = t;
                     break;
                 }
