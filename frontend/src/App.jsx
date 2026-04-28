@@ -9,7 +9,7 @@ import IntroModal from './components/IntroModal';
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.3.16';
+const APP_VERSION = '1.3.19';
 
 export default function App() {
   const [theme, setTheme] = useState('light');
@@ -729,7 +729,7 @@ export default function App() {
                       </div>
                     </div>
                     <div className="flex justify-between items-center border-b border-gray-800/50 pb-3">
-                      <div><h3 className="text-[13px] text-gray-200 tracking-wider">AI 模型</h3><p className="text-[10px] text-gray-500 mt-1 font-mono">{settingsConfig.LONGCAT_MODEL || '未配置'}</p></div>
+                      <div><h3 className="text-[13px] text-gray-200 tracking-wider">AI 模型</h3><p className="text-[10px] text-gray-500 mt-1 font-mono">{settingsConfig.LONGCAT_MODEL || '未配置'}{settingsConfig.LONGCAT_MODEL_2 ? ` · ${settingsConfig.LONGCAT_MODEL_2}` : ''}{settingsConfig.LONGCAT_MODEL_3 ? ` · ${settingsConfig.LONGCAT_MODEL_3}` : ''}</p></div>
                       <div className="flex items-center gap-2"><Dot ok={backendStatus.llm} /><span className="text-[10px] text-gray-500">{backendStatus.llm ? '正常' : '异常'}</span></div>
                     </div>
                     <div className="flex justify-between items-center border-b border-gray-800/50 pb-3">
@@ -765,15 +765,32 @@ export default function App() {
                 {/* 配置 */}
                 {settingsTab === 'config' && (
                   <div className="space-y-3">
-                    <div className="text-[10px] text-gray-500 mb-2">配置 AI 模型接口，支持任何兼容 OpenAI 格式的 API（如 LongCat、OpenAI、DeepSeek 等）</div>
-                    <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">API URL（如 https://api.openai.com/v1/chat/completions）</label><input value={settingsConfig.LONGCAT_API_URL || ''} onChange={e => setSettingsConfig(p => ({ ...p, LONGCAT_API_URL: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono" /></div>
-                    <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">API Key</label><p className="text-[9px] text-gray-600 mt-0.5">你的 API 密钥</p><input value={settingsConfig.LONGCAT_API_KEY || ''} onChange={e => setSettingsConfig(p => ({ ...p, LONGCAT_API_KEY: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono" /></div>
-                    <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">模型名称</label><p className="text-[9px] text-gray-600 mt-0.5">如 LongCat-Flash-Lite、gpt-4o、deepseek-chat 等</p><input value={settingsConfig.LONGCAT_MODEL || ''} onChange={e => setSettingsConfig(p => ({ ...p, LONGCAT_MODEL: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono" /></div>
-                    <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">音乐 API URL</label><input value={settingsConfig.MUSIC_API_URL || ''} onChange={e => setSettingsConfig(p => ({ ...p, MUSIC_API_URL: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono" /></div>
-                    <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">音乐源</label>
-                      <select value={settingsConfig.MUSIC_SOURCE || 'netease'} onChange={e => setSettingsConfig(p => ({ ...p, MUSIC_SOURCE: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono">
-                        <option value="netease">网易云</option><option value="kuwo">酷我</option><option value="qqmusic">QQ音乐</option><option value="kugou">酷狗</option>
-                      </select>
+                    <div className="text-[10px] text-gray-500 mb-2">配置 AI 模型接口，支持任何兼容 OpenAI 格式的 API。可配置多个模型，主模型失败时自动 fallback。</div>
+
+                    {/* 主模型 */}
+                    <div className="text-[10px] font-bold text-[#2ee4a6] uppercase tracking-wider mb-1">主模型</div>
+                    <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">API URL</label><input placeholder="https://api.openai.com/v1/chat/completions" value={settingsConfig.LONGCAT_API_URL || ''} onChange={e => setSettingsConfig(p => ({ ...p, LONGCAT_API_URL: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono" /></div>
+                    <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">API Key</label><input placeholder="sk-xxx..." value={settingsConfig.LONGCAT_API_KEY || ''} onChange={e => setSettingsConfig(p => ({ ...p, LONGCAT_API_KEY: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono" /></div>
+                    <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">模型名称</label><input placeholder="LongCat-Flash-Lite" value={settingsConfig.LONGCAT_MODEL || ''} onChange={e => setSettingsConfig(p => ({ ...p, LONGCAT_MODEL: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono" /></div>
+
+                    {/* 备用模型1 */}
+                    <div className="text-[10px] font-bold text-yellow-500 uppercase tracking-wider mb-1 mt-3">备用模型 1（可选）</div>
+                    <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">API URL</label><input placeholder="留空则不启用" value={settingsConfig.LONGCAT_API_URL_2 || ''} onChange={e => setSettingsConfig(p => ({ ...p, LONGCAT_API_URL_2: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono" /></div>
+                    <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">API Key</label><input placeholder="sk-xxx..." value={settingsConfig.LONGCAT_API_KEY_2 || ''} onChange={e => setSettingsConfig(p => ({ ...p, LONGCAT_API_KEY_2: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono" /></div>
+                    <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">模型名称</label><input placeholder="deepseek-chat" value={settingsConfig.LONGCAT_MODEL_2 || ''} onChange={e => setSettingsConfig(p => ({ ...p, LONGCAT_MODEL_2: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono" /></div>
+
+                    {/* 备用模型2 */}
+                    <div className="text-[10px] font-bold text-orange-500 uppercase tracking-wider mb-1 mt-3">备用模型 2（可选）</div>
+                    <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">API URL</label><input placeholder="留空则不启用" value={settingsConfig.LONGCAT_API_URL_3 || ''} onChange={e => setSettingsConfig(p => ({ ...p, LONGCAT_API_URL_3: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono" /></div>
+                    <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">API Key</label><input placeholder="sk-xxx..." value={settingsConfig.LONGCAT_API_KEY_3 || ''} onChange={e => setSettingsConfig(p => ({ ...p, LONGCAT_API_KEY_3: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono" /></div>
+                    <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">模型名称</label><input placeholder="gpt-4o-mini" value={settingsConfig.LONGCAT_MODEL_3 || ''} onChange={e => setSettingsConfig(p => ({ ...p, LONGCAT_MODEL_3: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono" /></div>
+
+                    <div className="border-t border-gray-800 pt-3 mt-3">
+                      <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">音乐源</label>
+                        <select value={settingsConfig.MUSIC_SOURCE || 'netease'} onChange={e => setSettingsConfig(p => ({ ...p, MUSIC_SOURCE: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono">
+                          <option value="netease">网易云</option><option value="kuwo">酷我</option><option value="qqmusic">QQ音乐</option><option value="kugou">酷狗</option>
+                        </select>
+                      </div>
                     </div>
                     {settingsError && <p className="text-xs text-red-400">{settingsError}</p>}
                     {settingsSuccess && <p className="text-xs text-[#2ee4a6]">{settingsSuccess}</p>}

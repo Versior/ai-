@@ -5,9 +5,44 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 class LLMService {
     constructor() {
-        this.apiKey = process.env.LONGCAT_API_KEY;
-        this.apiUrl = process.env.LONGCAT_API_URL || 'https://api.longcat.chat/openai/v1/chat/completions';
-        this.model = process.env.LONGCAT_MODEL || 'LongCat-Flash-Lite';
+        // 支持多模型：主模型 + 备用模型1 + 备用模型2
+        this.models = [];
+        // 主模型
+        if (process.env.LONGCAT_API_KEY && process.env.LONGCAT_API_URL) {
+            this.models.push({
+                name: process.env.LONGCAT_MODEL || 'LongCat-Flash-Lite',
+                apiUrl: process.env.LONGCAT_API_URL,
+                apiKey: process.env.LONGCAT_API_KEY,
+                label: '主模型'
+            });
+        }
+        // 备用模型1
+        if (process.env.LONGCAT_API_KEY_2 && process.env.LONGCAT_API_URL_2) {
+            this.models.push({
+                name: process.env.LONGCAT_MODEL_2 || 'LongCat-Flash-Lite',
+                apiUrl: process.env.LONGCAT_API_URL_2,
+                apiKey: process.env.LONGCAT_API_KEY_2,
+                label: '备用模型1'
+            });
+        }
+        // 备用模型2
+        if (process.env.LONGCAT_API_KEY_3 && process.env.LONGCAT_API_URL_3) {
+            this.models.push({
+                name: process.env.LONGCAT_MODEL_3 || 'LongCat-Flash-Lite',
+                apiUrl: process.env.LONGCAT_API_URL_3,
+                apiKey: process.env.LONGCAT_API_KEY_3,
+                label: '备用模型2'
+            });
+        }
+        // 兼容旧配置：如果没有多模型环境变量，用旧变量
+        if (this.models.length === 0) {
+            this.models.push({
+                name: process.env.LONGCAT_MODEL || 'LongCat-Flash-Lite',
+                apiUrl: process.env.LONGCAT_API_URL || 'https://api.longcat.chat/openai/v1/chat/completions',
+                apiKey: process.env.LONGCAT_API_KEY || '',
+                label: '主模型'
+            });
+        }
         this.userTracks = this.loadUserTracks();
         
         this.systemPrompt = `你是赛博朋克风格AI音乐助手，代号Versior。
@@ -40,10 +75,20 @@ class LLMService {
     }
 
     reloadConfig() {
-        this.apiKey = process.env.LONGCAT_API_KEY;
-        this.apiUrl = process.env.LONGCAT_API_URL || 'https://api.longcat.chat/openai/v1/chat/completions';
-        this.model = process.env.LONGCAT_MODEL || 'LongCat-Flash-Lite';
-        console.log('🔄 LLM 配置已重载:', { apiUrl: this.apiUrl, model: this.model });
+        this.models = [];
+        if (process.env.LONGCAT_API_KEY && process.env.LONGCAT_API_URL) {
+            this.models.push({ name: process.env.LONGCAT_MODEL || 'LongCat-Flash-Lite', apiUrl: process.env.LONGCAT_API_URL, apiKey: process.env.LONGCAT_API_KEY, label: '主模型' });
+        }
+        if (process.env.LONGCAT_API_KEY_2 && process.env.LONGCAT_API_URL_2) {
+            this.models.push({ name: process.env.LONGCAT_MODEL_2 || 'LongCat-Flash-Lite', apiUrl: process.env.LONGCAT_API_URL_2, apiKey: process.env.LONGCAT_API_KEY_2, label: '备用模型1' });
+        }
+        if (process.env.LONGCAT_API_KEY_3 && process.env.LONGCAT_API_URL_3) {
+            this.models.push({ name: process.env.LONGCAT_MODEL_3 || 'LongCat-Flash-Lite', apiUrl: process.env.LONGCAT_API_URL_3, apiKey: process.env.LONGCAT_API_KEY_3, label: '备用模型2' });
+        }
+        if (this.models.length === 0) {
+            this.models.push({ name: 'LongCat-Flash-Lite', apiUrl: 'https://api.longcat.chat/openai/v1/chat/completions', apiKey: '', label: '主模型' });
+        }
+        console.log('🔄 LLM 配置已重载:', this.models.map(m => `${m.label}: ${m.name} (${m.apiUrl})`));
     }
 
     getUserTracksSummary(maxCount = 10) {
@@ -219,25 +264,46 @@ class LLMService {
                 if (weatherDesc) userMessage += `\n\n${weatherDesc}`;
             }
             
-            const response = await axios.post(
-                this.apiUrl,
-                {
-                    model: this.model,
-                    messages: [
-                        { role: "system", content: this.systemPrompt },
-                        { role: "user", content: userMessage }
-                    ],
-                    temperature: 0.7,
-                    max_tokens: 300
-                },
-                {
-                    headers: {
-                        'Authorization': `Bearer ${this.apiKey}`,
-                        'Content-Type': 'application/json'
-                    },
-                    timeout: 10000
+            // 多模型 fallback 轮询
+            let response = null;
+            let lastError = null;
+            for (let i = 0; i < this.models.length; i++) {
+                const m = this.models[i];
+                if (!m.apiKey) continue;
+                try {
+                    console.log(`🧠 尝试模型 ${i+1}/${this.models.length}: ${m.label} (${m.name})`);
+                    response = await axios.post(
+                        m.apiUrl,
+                        {
+                            model: m.name,
+                            messages: [
+                                { role: "system", content: this.systemPrompt },
+                                { role: "user", content: userMessage }
+                            ],
+                            temperature: 0.7,
+                            max_tokens: 300
+                        },
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${m.apiKey}`,
+                                'Content-Type': 'application/json'
+                            },
+                            timeout: 10000
+                        }
+                    );
+                    if (response) {
+                        console.log(`✅ 模型 ${m.label} 响应成功`);
+                        break;
+                    }
+                } catch (e) {
+                    lastError = e;
+                    console.log(`⚠️ 模型 ${m.label} 失败: ${e.message.includes('timeout') ? '超时' : e.message}`);
+                    continue;
                 }
-            );
+            }
+            if (!response) {
+                throw lastError || new Error('所有模型均失败');
+            }
 
             const content = response.data.choices[0].message.content.trim();
             console.log('🧠 LLM 原始返回:', content.substring(0, 200));

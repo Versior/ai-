@@ -35,7 +35,14 @@ async function handleGet(req, res) {
         success: true,
         config: {
             LONGCAT_API_URL: process.env.LONGCAT_API_URL || '',
+            LONGCAT_API_KEY: process.env.LONGCAT_API_KEY || '',
             LONGCAT_MODEL: process.env.LONGCAT_MODEL || '',
+            LONGCAT_API_URL_2: process.env.LONGCAT_API_URL_2 || '',
+            LONGCAT_API_KEY_2: process.env.LONGCAT_API_KEY_2 || '',
+            LONGCAT_MODEL_2: process.env.LONGCAT_MODEL_2 || '',
+            LONGCAT_API_URL_3: process.env.LONGCAT_API_URL_3 || '',
+            LONGCAT_API_KEY_3: process.env.LONGCAT_API_KEY_3 || '',
+            LONGCAT_MODEL_3: process.env.LONGCAT_MODEL_3 || '',
             MUSIC_SOURCE: process.env.MUSIC_SOURCE || 'netease',
         },
     }));
