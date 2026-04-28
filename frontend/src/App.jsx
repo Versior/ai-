@@ -9,7 +9,7 @@ import IntroModal from './components/IntroModal';
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.3.1';
 
 export default function App() {
   const [theme, setTheme] = useState('light');
@@ -235,15 +235,6 @@ export default function App() {
     return () => { clearTimeout(reconnectTimer); if (pingInterval) clearInterval(pingInterval); if (ws && ws.readyState === 1) ws.close(); };
   }, []);
 
-  // 歌词自动滚动
-  useEffect(() => {
-    if (!showLyricsTab || currentLyricIdx < 0 || !lyricScrollRef.current) return;
-    const container = lyricScrollRef.current;
-    const lineHeight = 28; // py-1 + text-xs ≈ 28px
-    const targetScroll = currentLyricIdx * lineHeight - container.clientHeight / 2 + lineHeight / 2;
-    container.scrollTo({ top: Math.max(0, targetScroll), behavior: 'smooth' });
-  }, [currentLyricIdx, showLyricsTab]);
-
   // === 歌词 ===
   const [lyrics, setLyrics] = useState([]); // [{time, text}]
   const [currentLyricIdx, setCurrentLyricIdx] = useState(-1);
@@ -268,6 +259,15 @@ export default function App() {
     }
     return parsed;
   };
+
+  // 歌词自动滚动
+  useEffect(() => {
+    if (!showLyricsTab || currentLyricIdx < 0 || !lyricScrollRef.current) return;
+    const container = lyricScrollRef.current;
+    const lineHeight = 28; // py-1 + text-xs ≈ 28px
+    const targetScroll = currentLyricIdx * lineHeight - container.clientHeight / 2 + lineHeight / 2;
+    container.scrollTo({ top: Math.max(0, targetScroll), behavior: 'smooth' });
+  }, [currentLyricIdx, showLyricsTab]);
 
   // === 播放核心 ===
   const userInteractedRef = useRef(false);
