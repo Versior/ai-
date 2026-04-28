@@ -9,7 +9,7 @@ import IntroModal from './components/IntroModal';
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.2.2';
+const APP_VERSION = '1.2.3';
 
 export default function App() {
   const [theme, setTheme] = useState('light');
@@ -586,6 +586,7 @@ export default function App() {
         <IntroModal
           onDismiss={handleDismissIntro}
           onClose={handleCloseIntro}
+          isDark={isDark}
         />
       )}
 
