@@ -224,7 +224,8 @@ class LLMService {
         };
     }
 
-    async generateResponse(userInput = "", weatherDesc = '') {
+    async generateResponse(userInput = "", weatherDesc = '', recentPlays = []) {
+        // recentPlays: [{title, artist}] 最近播放过的歌曲，LLM 会避免推荐
         try {
             const tracksSummary = this.getUserTracksSummary(10);
             
@@ -243,6 +244,10 @@ class LLMService {
                 if (styleTracks) userMessage += `\n\n【用户收藏的音乐（${styleStr ? '风格匹配' : '随机'}）】\n${styleTracks}`;
                 userMessage += `\n\n请作为 Versior 用中文响应。根据用户品味推荐，但【不要从上面的收藏列表里选歌】，推荐用户没听过但风格相似的新歌，帮用户发现新音乐。`;
                 
+                // 最近播放历史，让 LLM 避免重复推荐
+                if (recentPlays.length > 0) {
+                    userMessage += `\n\n【最近已播放的歌曲（禁止推荐这些歌）】\n${recentPlays.map(p => `${p.title} - ${p.artist}`).join('\n')}`;
+                }
                 if (styleStr) {
                     userMessage += `\n\n⚠️ 重要：用户指定了「${styleStr}」风格，所有推荐必须严格遵守返个风格，不要偏离。天气仅作辅助参考，不要覆盖用户风格。`;
                 } else {
@@ -260,7 +265,11 @@ class LLMService {
                 if (likedTracks.length > 0) {
                     userMessage += `\n\n【用户最近喜欢的歌曲（优先参考）】\n${likedTracks.map(t => `${t.name} - ${t.artist}`).join('\n')}`;
                 }
-                userMessage += `\n\n⚠️ 核心要求：\n1. 必须基于上面的用户品味和收藏风格来推荐\n2. 推荐用户没听过但风格相似的新歌（不要从收藏列表里选）\n3. 播报词以歌曲和歌手为中心，分享歌曲背后的故事、情感或创作背景\n4. 不要被天气关键词束缚，天气仅作氛围参考`;
+                // 最近播放历史，让 LLM 避免重复推荐
+                if (recentPlays.length > 0) {
+                    userMessage += `\n\n【最近已播放的歌曲（禁止推荐这些歌）】\n${recentPlays.map(p => `${p.title} - ${p.artist}`).join('\n')}`;
+                }
+                userMessage += `\n\n⚠️ 核心要求：\n1. 必须基于上面的用户品味和收藏风格来推荐\n2. 推荐用户没听过但风格相似的新歌（不要从收藏列表里选）\n3. 绝对不要推荐上面【最近已播放的歌曲】列表中的任何一首歌\n4. 播报词以歌曲和歌手为中心，分享歌曲背后的故事、情感或创作背景\n5. 不要被天气关键词束缚，天气仅作氛围参考`;
                 if (weatherDesc) userMessage += `\n\n${weatherDesc}`;
             }
             

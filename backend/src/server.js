@@ -261,7 +261,8 @@ class RadioServer {
             const weatherDesc = weatherService.getWeatherDesc(weather);
 
             // 并行：LLM 生成 + 先用歌名搜索（如果 text 包含歌名）
-            const llmPromise = llmService.generateResponse(text, weatherDesc).then(r => ({ type: 'llm', data: r })).catch(e => ({ type: 'llm', error: e }));
+            const recentPlays = (this.playHistoryTitles || []).slice(-10);
+            const llmPromise = llmService.generateResponse(text, weatherDesc, recentPlays).then(r => ({ type: 'llm', data: r })).catch(e => ({ type: 'llm', error: e }));
 
             // 等 LLM（最多 10s）
             const llmResult = await llmPromise;
@@ -371,8 +372,9 @@ class RadioServer {
                     && !playedTitles.includes(tTitle);
             });
 
+            const recentPlays = (this.playHistoryTitles || []).slice(-10);
             // 并行执行 LLM 和搜索
-            const llmPromise = llmService.generateResponse('', weatherDesc).then(r => ({ type: 'llm', data: r })).catch(e => ({ type: 'llm', error: e }));
+            const llmPromise = llmService.generateResponse('', weatherDesc, recentPlays).then(r => ({ type: 'llm', data: r })).catch(e => ({ type: 'llm', error: e }));
             let searchPromise = null;
             if (queueCandidate) {
                 searchPromise = musicService.searchSong(queueCandidate.title, excludeIds).then(d => ({ type: 'search', data: d })).catch(e => ({ type: 'search', error: e }));
@@ -520,7 +522,8 @@ class RadioServer {
             if (!musicData) {
                 const weather = await weatherService.getWeather(clientIP || '127.0.0.1');
                 const weatherDesc = weatherService.getWeatherDesc(weather);
-                const llmResponse = await llmService.generateResponse('', weatherDesc);
+                const recentPlays = (this.playHistoryTitles || []).slice(-10);
+                const llmResponse = await llmService.generateResponse('', weatherDesc, recentPlays);
                 const trackInfo = llmResponse.track;
                 try {
                     musicData = await musicService.searchSong(trackInfo.title);
@@ -535,9 +538,11 @@ class RadioServer {
                 // 用列表的歌，重新生成 AI 总结
                 const weather = await weatherService.getWeather(clientIP || '127.0.0.1');
                 const weatherDesc = weatherService.getWeatherDesc(weather);
+                const recentPlays = (this.playHistoryTitles || []).slice(-10);
                 const llmResponse = await llmService.generateResponse(
                     `请介绍歌曲《${nextQueueTrack.title}》- ${nextQueueTrack.artist || ''}，讲述这首歌的故事、情感或创作背景`,
-                    weatherDesc
+                    weatherDesc,
+                    recentPlays
                 );
                 this.preloadedSay = llmResponse.say;
                 this.preloadedQueue = llmResponse.queue || [];
