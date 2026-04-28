@@ -253,6 +253,9 @@ async function searchSong(songName, excludeIds = []) {
             }
         );
 
+        if (searchRes.data?.code !== 200) {
+            console.log(`  ⚠️ 搜索 API 返回 code=${searchRes.data?.code}，可能是 Cookie 过期或 API 限流`);
+        }
         if (searchRes.data?.code === 200 && searchRes.data?.result?.songs?.length > 0) {
             const songs = searchRes.data.result.songs;
             // 过滤掉已播放的歌曲
@@ -298,7 +301,10 @@ async function buildTrackInfo(song, cookie) {
         if (songUrl) songUrl = songUrl.replace('http://', 'https://');
     } catch (e) {}
 
-    if (!songUrl) throw new Error('无播放链接');
+    if (!songUrl) {
+        console.log(`  ⚠️ 无播放链接: ${song.name} (${songId})，尝试下一首`);
+        throw new Error('无播放链接');
+    }
 
     // 获取详情
     let detail = song;
