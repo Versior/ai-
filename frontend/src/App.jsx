@@ -9,7 +9,7 @@ import IntroModal from './components/IntroModal';
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.3.8';
+const APP_VERSION = '1.3.9';
 
 export default function App() {
   const [theme, setTheme] = useState('light');
@@ -240,6 +240,7 @@ export default function App() {
   const [lyrics, setLyrics] = useState([]); // [{time, text}]
   const skipCooldownRef = useRef(false);
   const [currentLyricIdx, setCurrentLyricIdx] = useState(-1);
+  const currentLyricIdxRef = useRef(-1);
   const [showLyricsTab, setShowLyricsTab] = useState(false);
   const lyricScrollRef = useRef(null);
 
@@ -264,12 +265,12 @@ export default function App() {
 
   // 歌词自动滚动
   useEffect(() => {
-    if (!showLyricsTab || currentLyricIdx < 0 || !lyricScrollRef.current) return;
+    if (currentLyricIdx < 0 || !lyricScrollRef.current) return;
     const container = lyricScrollRef.current;
-    const lineHeight = 28; // py-1 + text-xs ≈ 28px
+    const lineHeight = 28;
     const targetScroll = currentLyricIdx * lineHeight - container.clientHeight / 2 + lineHeight / 2;
     container.scrollTo({ top: Math.max(0, targetScroll), behavior: 'smooth' });
-  }, [currentLyricIdx, showLyricsTab]);
+  }, [currentLyricIdx]);
 
   // === 播放核心 ===
   const userInteractedRef = useRef(false);
@@ -408,7 +409,10 @@ export default function App() {
           if (current >= lyrics[i].time) idx = i;
           else break;
         }
-        if (idx !== currentLyricIdx) setCurrentLyricIdx(idx);
+        if (idx !== currentLyricIdxRef.current) {
+          currentLyricIdxRef.current = idx;
+          setCurrentLyricIdx(idx);
+        }
       }
       // 播放到 80% 后，主动请求预加载下一首
       if (dur && current / dur > 0.8 && !preloadSentRef.current) {
@@ -999,7 +1003,7 @@ export default function App() {
             <div className={`${isDark ? 'bg-[#0f0f13]' : 'bg-gray-50'} border-t ${brd}`}>
               <div className={`flex justify-between px-6 py-2.5 text-[10px] tracking-widest border-b ${brd} text-gray-500`}>
                 <span>播放列表</span>
-                <span>{queue.length} 首曲目 {preloadStatus === 'ready' ? '· ✓ 已就绪' : ''}</span>
+                <span>{Math.min(queue.length, 3)} 首曲目 {preloadStatus === 'ready' ? '· ✓ 已就绪' : ''}</span>
               </div>
               <div className="flex flex-col">
                 {queue.slice(0, 3).map((track, idx) => {

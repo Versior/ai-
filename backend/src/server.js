@@ -92,6 +92,7 @@ class RadioServer {
         this.lastSay = '';
         this.lastQueue = [];
         this.playHistory = []; // 最近播放的歌曲 ID，用于去重
+        this.playHistoryTitles = []; // 最近播放的歌名+歌手，用于同名去重
         this.maxHistory = 20;
     }
 
@@ -264,6 +265,14 @@ class RadioServer {
                 musicData = await musicService.pickRandomFromLibrary();
                 if (!musicData) throw new Error('搜索失败且歌单中无可用歌曲');
             }
+            // 同名去重
+            if (musicData && this.playHistoryTitles?.some(t => t.title === musicData.title && t.artist === musicData.artist)) {
+                console.log(`⚠️ 同名已播放: ${musicData.title} - ${musicData.artist}`);
+                try {
+                    const nextData = await musicService.searchSong(trackInfo.title, excludeIds.concat(String(musicData.id)));
+                    if (nextData) musicData = nextData;
+                } catch (e) {}
+            }
 
             const track = {
                 id: musicData.id || trackInfo.id || 0,
@@ -281,8 +290,10 @@ class RadioServer {
             // 记录播放历史
             if (track.id) {
                 this.playHistory.push(String(track.id));
+                this.playHistoryTitles.push({ title: track.title, artist: track.artist });
                 if (this.playHistory.length > this.maxHistory) {
                     this.playHistory.shift();
+                    this.playHistoryTitles.shift();
                 }
             }
 
@@ -327,6 +338,14 @@ class RadioServer {
                 musicData = await musicService.pickRandomFromLibrary();
                 if (!musicData) throw new Error('搜索失败且歌单中无可用歌曲');
             }
+            // 同名去重
+            if (musicData && this.playHistoryTitles?.some(t => t.title === musicData.title && t.artist === musicData.artist)) {
+                console.log(`⚠️ 同名已播放: ${musicData.title} - ${musicData.artist}`);
+                try {
+                    const nextData = await musicService.searchSong(trackInfo.title, excludeIds.concat(String(musicData.id)));
+                    if (nextData) musicData = nextData;
+                } catch (e) {}
+            }
 
             const track = {
                 id: musicData.id || trackInfo.id || 0,
@@ -344,8 +363,10 @@ class RadioServer {
             // 记录播放历史
             if (track.id) {
                 this.playHistory.push(String(track.id));
+                this.playHistoryTitles.push({ title: track.title, artist: track.artist });
                 if (this.playHistory.length > this.maxHistory) {
                     this.playHistory.shift();
+                    this.playHistoryTitles.shift();
                 }
             }
 
