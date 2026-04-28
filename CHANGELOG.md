@@ -1,5 +1,12 @@
 # 📋 Versior AI 电台 - 更新日志
 
+## v1.1.0 (2026-04-28)
+- 🔧 重构：后端 music.js（~1000行）拆分为 netease.js + index.js + routes/
+- 🔧 重构：server.js 从 698 行减到 ~350 行，路由模块化
+- 🔧 重构：前端提取 IntroModal 组件
+- 🧹 清理：移除酷我/QQ音乐/酷狗相关代码（当前只支持网易云）
+- 📝 新增 REFACTOR_PLAN.md
+
 ## v1.0.54 (2026-04-27)
 - 🔧 优化：LLM 配置改为前端可自定义（API URL/Key/模型名称）
 - 🔧 优化：.env 改为空模板，用户自行填写
