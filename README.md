@@ -193,6 +193,13 @@ npm run build
 | LONGCAT_API_KEY | ✅ | LLM API 密钥 |
 | LONGCAT_API_URL | ✅ | LLM API 地址（支持任何 OpenAI 格式） |
 | LONGCAT_MODEL | ✅ | LLM 模型名称 |
+| LONGCAT_API_KEY_2 | ❌ | 备用模型1 API Key |
+| LONGCAT_API_URL_2 | ❌ | 备用模型1 API URL |
+| LONGCAT_MODEL_2 | ❌ | 备用模型1 模型名称 |
+| LONGCAT_API_KEY_3 | ❌ | 备用模型2 API Key |
+| LONGCAT_API_URL_3 | ❌ | 备用模型2 API URL |
+| LONGCAT_MODEL_3 | ❌ | 备用模型2 模型名称 |
+| LLM_TIMEOUT | ❌ | 主模型超时秒数，默认 15 |
 | NETEASE_COOKIE | ✅ | 网易云音乐 Cookie |
 | KUWO_COOKIE | ❌ | 酷我音乐 Cookie |
 | QQMUSIC_COOKIE | ❌ | QQ音乐 Cookie |

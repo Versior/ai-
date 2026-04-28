@@ -786,6 +786,9 @@ export default function App() {
                     <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">模型名称</label><input placeholder="gpt-4o-mini" value={settingsConfig.LONGCAT_MODEL_3 || ''} onChange={e => setSettingsConfig(p => ({ ...p, LONGCAT_MODEL_3: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono" /></div>
 
                     <div className="border-t border-gray-800 pt-3 mt-3">
+                      <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">主模型超时（秒）</label><input type="number" min="5" max="60" value={settingsConfig.LLM_TIMEOUT || '15'} onChange={e => setSettingsConfig(p => ({ ...p, LLM_TIMEOUT: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono" /></div>
+                    </div>
+                    <div className="border-t border-gray-800 pt-3 mt-3">
                       <div><label className="text-[10px] text-gray-400 uppercase tracking-wider">音乐源</label>
                         <select value={settingsConfig.MUSIC_SOURCE || 'netease'} onChange={e => setSettingsConfig(p => ({ ...p, MUSIC_SOURCE: e.target.value }))} className="w-full bg-[#0a0a0c] border border-gray-700 rounded-lg py-2 px-3 text-xs text-gray-200 mt-1 focus:outline-none focus:border-[#2ee4a6] font-mono">
                           <option value="netease">网易云</option><option value="kuwo">酷我</option><option value="qqmusic">QQ音乐</option><option value="kugou">酷狗</option>

@@ -271,7 +271,10 @@ class LLMService {
                 const m = this.models[i];
                 if (!m.apiKey) continue;
                 try {
-                    console.log(`🧠 尝试模型 ${i+1}/${this.models.length}: ${m.label} (${m.name})`);
+                    const isPrimary = i === 0;
+                    const primaryTimeout = parseInt(process.env.LLM_TIMEOUT || '15') * 1000;
+                    const timeoutMs = isPrimary ? primaryTimeout : Math.min(primaryTimeout, 10000);
+                    console.log(`🧠 尝试模型 ${i+1}/${this.models.length}: ${m.label} (${m.name}, ${timeoutMs/1000}s超时)`);
                     response = await axios.post(
                         m.apiUrl,
                         {
@@ -288,7 +291,7 @@ class LLMService {
                                 'Authorization': `Bearer ${m.apiKey}`,
                                 'Content-Type': 'application/json'
                             },
-                            timeout: 10000
+                            timeout: timeoutMs
                         }
                     );
                     if (response) {
