@@ -93,8 +93,6 @@ class RadioServer {
         this.lastQueue = [];
         this.playHistory = []; // 最近播放的歌曲 ID，用于去重
         this.maxHistory = 20;
-        this.lastProcessTime = {}; // IP 上次处理时间，防抖
-        this.processDebounceMs = 5000; // 5秒内不重复处理
     }
 
     start() {
@@ -305,14 +303,12 @@ class RadioServer {
     // 处理下一首
     // ============================================================
     async processNextTrack(clientIP) {
-        if (this.isProcessing) { console.log('正在处理中，跳过...'); return; }
-        // IP 防抖：5秒内同一 IP 不重复处理
-        const now = Date.now();
-        if (this.lastProcessTime[clientIP] && now - this.lastProcessTime[clientIP] < this.processDebounceMs) {
-            console.log(`⏱️ 防抖跳过 (${clientIP})`);
+        if (this.isProcessing) {
+            console.log('正在处理中，加入队列...');
+            // 等当前处理完后自动再处理一次
+            setTimeout(() => this.processNextTrack(clientIP), 1000);
             return;
         }
-        this.lastProcessTime[clientIP] = now;
         this.isProcessing = true;
         console.log('🎵 处理下一首曲目...');
 

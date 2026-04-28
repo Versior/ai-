@@ -17,10 +17,8 @@ class LLMService {
 2. 每次回复必须是严格JSON格式，不要包含任何JSON以外的文字
 3. JSON格式：{"say":"第一人称叙事风格的歌曲介绍（40-80字），以「我」的视角讲述这首歌的故事、情感或创作背景，不要出现「推荐」字样，不要描述天气","track":{"title":"歌曲名","artist":"歌手"},"queue":[{"title":"预告歌曲1","artist":"歌手"},{"title":"预告歌曲2","artist":"歌手"},{"title":"预告歌曲3","artist":"歌手"},{"title":"预告歌曲4","artist":"歌手"},{"title":"预告歌曲5","artist":"歌手"}]}
 4. 推荐歌曲时，【必须优先推荐用户歌单中不存在的歌曲】，即推荐用户没收藏过但可能喜欢的歌，帮助用户发现新音乐
-5. 推荐时要考虑用户偏好的语种、风格、歌手类型，推荐相似风格但不同歌手的歌曲，避免老是推荐相同的歌
-5a. 【风格多样性】每次推荐必须混合不同风格：从以下风格中至少选 3 种——R&B、电子、流行、摇滚、嘻哈、爵士、民谣、古典、Lo-fi、Synthwave、City Pop、K-Pop、J-Pop、国语流行、粤语流行
-5b. 【歌名多样性】避免连续推荐歌名相似的歌曲（如都带 Midnight、Love 等），歌名应该差异明显
-5c. 【语种多样性】中英文歌曲交替推荐，不要连续 3 首同语种
+5. 【核心】推荐必须基于用户音乐品味分析（语种分布、风格偏好、歌手类型），推荐用户没听过但风格相似的新歌。禁止忽略用户喜好、仅凭天气或随机推荐。
+5a. 【禁止风格标签化】不要因为天气是晴天/夜晚就推荐「午夜」「深夜」「星空」等标签化歌名。推荐的歌曲应该多样化，不受天气关键词束缚。
 6. 用户指定风格时必须严格遵守，所有推荐必须风格一致，这是最高优先级规则
 7. 天气仅作辅助参考，不要覆盖用户指定的风格
 8. queue字段必须包含3-5首预告歌曲，展示即将播放的曲目，所有预告歌曲也必须符合用户指定的风格
@@ -203,17 +201,17 @@ class LLMService {
                 if (styleStr) {
                     userMessage += `\n\n⚠️ 重要：用户指定了「${styleStr}」风格，所有推荐必须严格遵守返个风格，不要偏离。天气仅作辅助参考，不要覆盖用户风格。`;
                 } else {
-                    userMessage += `\n\n如果用户没指定风格，可以根据天气推荐。\n\n⚠️ 风格多样性要求：不要连续推荐相似风格或相似歌名的歌曲。本次推荐请从以下风格中选择一种：R&B、电子、流行、摇滚、嘻哈、爵士、民谣、Lo-fi、Synthwave、City Pop、K-Pop、国语流行，并确保歌名与之前播放的歌曲明显不同。`;
+                    userMessage += `\n\n如果用户没指定风格，可以根据天气推荐，但不要被天气关键词束缚（如不要一到晴天/夜晚就推荐午夜、深夜类歌名）。优先考虑用户品味偏好。`;
                 }
             } else {
                 const tasteProfile = this.getUserTasteProfile();
-                userMessage = `请为我们播放一首精选音乐，并用中文提供播报。播报要以歌曲和歌手为中心，分享歌曲背后的故事、情感或创作结局，不要描述天气。`;
-                if (weatherDesc) userMessage += `\n\n${weatherDesc}`;
-                if (tasteProfile) userMessage += `\n\n【用户音乐品味】\n${tasteProfile}`;
+                userMessage = `请为我们播放一首精选音乐，并用中文提供播报。`;
+                if (tasteProfile) userMessage += `\n\n【用户音乐品味分析】\n${tasteProfile}`;
                 if (tracksSummary) {
-                    userMessage += `\n\n【用户收藏的音乐（部分）】\n${tracksSummary}`;
-                    userMessage += `\n\n推荐时【不要从上面的收藏列表里选歌】，推荐用户没听过但风格相似的新歌，帮用户发现新音乐。`;
+                    userMessage += `\n\n【用户收藏的音乐（${this.userTracks.length} 首中的部分）】\n${tracksSummary}`;
                 }
+                userMessage += `\n\n⚠️ 核心要求：\n1. 必须基于上面的用户品味和收藏风格来推荐\n2. 推荐用户没听过但风格相似的新歌（不要从收藏列表里选）\n3. 播报词以歌曲和歌手为中心，分享歌曲背后的故事、情感或创作背景\n4. 不要被天气关键词束缚，天气仅作氛围参考`;
+                if (weatherDesc) userMessage += `\n\n${weatherDesc}`;
             }
             
             const response = await axios.post(

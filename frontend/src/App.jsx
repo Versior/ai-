@@ -9,7 +9,7 @@ import IntroModal from './components/IntroModal';
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.3.5';
+const APP_VERSION = '1.3.6';
 
 export default function App() {
   const [theme, setTheme] = useState('light');
@@ -238,6 +238,7 @@ export default function App() {
 
   // === 歌词 ===
   const [lyrics, setLyrics] = useState([]); // [{time, text}]
+  const skipCooldownRef = useRef(false);
   const [currentLyricIdx, setCurrentLyricIdx] = useState(-1);
   const [showLyricsTab, setShowLyricsTab] = useState(false);
   const lyricScrollRef = useRef(null);
@@ -456,9 +457,13 @@ export default function App() {
     setTimeout(() => handleSkipForward(), 2000);
   };
 
-  const onTrackEnd = () => { setIsPlaying(false); handleSkipForward(); };
+  const onTrackEnd = () => { setIsPlaying(false); setTimeout(() => handleSkipForward(), 500); };
 
   const handleSkipForward = () => {
+    // 防抖：300ms内不重复触发
+    if (skipCooldownRef.current) return;
+    skipCooldownRef.current = true;
+    setTimeout(() => { skipCooldownRef.current = false; }, 300);
     // 优先使用预加载的歌曲
     if (preloadedTrackRef.current && preloadedTrackRef.current.url) {
       const t = preloadedTrackRef.current;
