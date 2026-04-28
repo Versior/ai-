@@ -235,7 +235,7 @@ class LLMService {
                         'Authorization': `Bearer ${this.apiKey}`,
                         'Content-Type': 'application/json'
                     },
-                    timeout: 30000
+                    timeout: 10000
                 }
             );
 

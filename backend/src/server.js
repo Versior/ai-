@@ -259,17 +259,33 @@ class RadioServer {
         try {
             const weather = await weatherService.getWeather(clientIP || '127.0.0.1');
             const weatherDesc = weatherService.getWeatherDesc(weather);
-            const llmResponse = await llmService.generateResponse(text, weatherDesc);
-            const trackInfo = llmResponse.track;
+
+            // 并行：LLM 生成 + 先用歌名搜索（如果 text 包含歌名）
+            const llmPromise = llmService.generateResponse(text, weatherDesc).then(r => ({ type: 'llm', data: r })).catch(e => ({ type: 'llm', error: e }));
+
+            // 等 LLM（最多 10s）
+            const llmResult = await llmPromise;
+            let llmResponse = null;
+            let trackInfo = null;
+            if (!llmResult.error) {
+                llmResponse = llmResult.data;
+                trackInfo = llmResponse.track;
+            } else {
+                console.log(`⚠️ LLM 失败: ${llmResult.error.message}`);
+            }
+
+            // LLM 失败时，尝试从用户输入提取歌名直接搜索
+            const searchTitle = trackInfo?.title || text.replace(/[^\u4e00-\u9fa5a-zA-Z0-9 ]/g, '').trim();
+            if (!searchTitle) throw new Error('无法确定搜索目标');
 
             const excludeIds = this.playHistory;
             let musicData;
             try {
-                musicData = await musicService.searchSong(trackInfo.title, excludeIds);
+                musicData = await musicService.searchSong(searchTitle, excludeIds);
             } catch (searchErr) {
                 console.log(`⚠️ 精确搜索失败: ${searchErr.message}，尝试模糊搜索`);
                 try {
-                    musicData = await musicService.searchSong(trackInfo.title, []);
+                    musicData = await musicService.searchSong(searchTitle, []);
                 } catch (e2) {
                     console.log(`⚠️ 模糊搜索也失败，从歌单随机选`);
                     musicData = await musicService.pickRandomFromLibrary();
@@ -287,16 +303,16 @@ class RadioServer {
                 if (duplicate) {
                     console.log(`⚠️ 同名已播放: ${musicData.title} - ${musicData.artist}，尝试找下一首`);
                     try {
-                        const nextData = await musicService.searchSong(trackInfo.title, excludeIds.concat(String(musicData.id)));
+                        const nextData = await musicService.searchSong(searchTitle, excludeIds.concat(String(musicData.id)));
                         if (nextData) musicData = nextData;
                     } catch (e) {}
                 }
             }
 
             const track = {
-                id: musicData.id || trackInfo.id || 0,
-                title: musicData.title || trackInfo.title,
-                artist: musicData.artist || trackInfo.artist,
+                id: musicData.id || trackInfo?.id || 0,
+                title: musicData.title || trackInfo?.title,
+                artist: musicData.artist || trackInfo?.artist,
                 url: musicData.url,
                 cover: musicData.cover,
                 hotComment: musicData.hotComment,
@@ -343,23 +359,70 @@ class RadioServer {
         try {
             const weather = await weatherService.getWeather(clientIP || '127.0.0.1');
             const weatherDesc = weatherService.getWeatherDesc(weather);
-            const llmResponse = await llmService.generateResponse('', weatherDesc);
-            const trackInfo = llmResponse.track;
 
+            // 并行：LLM 生成推荐 + 从上次 queue 预搜索
             const excludeIds = this.playHistory;
-            let musicData;
-            try {
-                musicData = await musicService.searchSong(trackInfo.title, excludeIds);
-            } catch (searchErr) {
-                console.log(`⚠️ 精确搜索失败: ${searchErr.message}，尝试模糊搜索`);
-                try {
-                    musicData = await musicService.searchSong(trackInfo.title, []);
-                } catch (e2) {
-                    console.log(`⚠️ 模糊搜索也失败，从歌单随机选`);
-                    musicData = await musicService.pickRandomFromLibrary();
-                    if (!musicData) throw new Error('搜索失败且歌单中无可用歌曲');
+            const lastQueue = this.lastQueue || [];
+            // 从上次 queue 找下一首候选（跳过当前和已播放的）
+            const playedTitles = this.playHistoryTitles?.map(t => t.title?.trim().toLowerCase()) || [];
+            const queueCandidate = lastQueue.find(t => {
+                const tTitle = t.title?.trim().toLowerCase();
+                return tTitle !== this.currentTrack?.title?.trim().toLowerCase()
+                    && !playedTitles.includes(tTitle);
+            });
+
+            // 并行执行 LLM 和搜索
+            const llmPromise = llmService.generateResponse('', weatherDesc).then(r => ({ type: 'llm', data: r })).catch(e => ({ type: 'llm', error: e }));
+            let searchPromise = null;
+            if (queueCandidate) {
+                searchPromise = musicService.searchSong(queueCandidate.title, excludeIds).then(d => ({ type: 'search', data: d })).catch(e => ({ type: 'search', error: e }));
+            }
+
+            // 等 LLM（最多 10s），搜索可以同时跑
+            const llmResult = await llmPromise;
+            let llmResponse = null;
+            let trackInfo = null;
+            if (!llmResult.error) {
+                llmResponse = llmResult.data;
+                trackInfo = llmResponse.track;
+            } else {
+                console.log(`⚠️ LLM 失败: ${llmResult.error.message}，使用默认推荐`);
+            }
+
+            // 确定搜索目标
+            const searchTitle = trackInfo?.title || queueCandidate?.title;
+            if (!searchTitle) throw new Error('无法确定搜索目标');
+
+            // 如果 queue 搜索已完成且歌名匹配，直接用
+            let musicData = null;
+            if (searchPromise) {
+                const searchResult = await searchPromise;
+                if (!searchResult.error && searchResult.data) {
+                    const sTitle = searchResult.data.title?.trim().toLowerCase();
+                    const targetTitle = searchTitle.trim().toLowerCase();
+                    if (sTitle === targetTitle || !trackInfo) {
+                        musicData = searchResult.data;
+                        console.log('⚡ 使用预搜索结果');
+                    }
                 }
             }
+
+            // 没有预搜索结果，重新搜索
+            if (!musicData) {
+                try {
+                    musicData = await musicService.searchSong(searchTitle, excludeIds);
+                } catch (searchErr) {
+                    console.log(`⚠️ 精确搜索失败: ${searchErr.message}，尝试模糊搜索`);
+                    try {
+                        musicData = await musicService.searchSong(searchTitle, []);
+                    } catch (e2) {
+                        console.log(`⚠️ 模糊搜索也失败，从歌单随机选`);
+                        musicData = await musicService.pickRandomFromLibrary();
+                        if (!musicData) throw new Error('搜索失败且歌单中无可用歌曲');
+                    }
+                }
+            }
+
             // 同名去重（模糊匹配，忽略大小写和空格）
             if (musicData) {
                 const dupTitle = musicData.title?.trim().toLowerCase();
@@ -371,16 +434,16 @@ class RadioServer {
                 if (duplicate) {
                     console.log(`⚠️ 同名已播放: ${musicData.title} - ${musicData.artist}，尝试找下一首`);
                     try {
-                        const nextData = await musicService.searchSong(trackInfo.title, excludeIds.concat(String(musicData.id)));
+                        const nextData = await musicService.searchSong(searchTitle, excludeIds.concat(String(musicData.id)));
                         if (nextData) musicData = nextData;
                     } catch (e) {}
                 }
             }
 
             const track = {
-                id: musicData.id || trackInfo.id || 0,
-                title: musicData.title || trackInfo.title,
-                artist: musicData.artist || trackInfo.artist,
+                id: musicData.id || trackInfo?.id || 0,
+                title: musicData.title || trackInfo?.title,
+                artist: musicData.artist || trackInfo?.artist,
                 url: musicData.url,
                 cover: musicData.cover,
                 hotComment: musicData.hotComment,
@@ -388,8 +451,8 @@ class RadioServer {
             };
 
             this.currentTrack = track;
-            this.lastSay = llmResponse.say;
-            this.lastQueue = llmResponse.queue || [];
+            this.lastSay = llmResponse?.say || `正在播放《${track.title}》`;
+            this.lastQueue = llmResponse?.queue || [];
             // 记录播放历史
             if (track.id) {
                 this.playHistory.push(String(track.id));
