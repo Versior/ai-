@@ -16,7 +16,8 @@ async function handleSearch(req, res, ctx) {
         return;
     }
 
-    const searchQuery = artist ? `${title} ${artist}` : title;
+    // 只用 title 搜索，artist 太复杂时会导致搜索失败
+    const searchQuery = title;
 
     try {
         const track = await ctx.musicService.searchSong(searchQuery);
