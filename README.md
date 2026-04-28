@@ -11,6 +11,8 @@
 - 🔄 **自动预加载** — 播放到 80% 时自动预加载下一首
 - 💬 **实时聊天** — WebSocket 实时通信
 - 🎨 **赛博朋克 UI** — 霓虹色调，像素字体
+- 💡 **发现新音乐** — AI 优先推荐歌单外的歌曲，帮你发现新音乐
+- 🔀 **亮色/暗色主题** — 支持一键切换
 
 ## 🚀 Docker 部署（推荐）
 
@@ -125,20 +127,33 @@ docker compose restart
 versior-radio/
 ├── backend/
 │   ├── src/
-│   │   ├── server.js       # 主服务器（HTTP + WebSocket）
-│   │   ├── llm.js          # LLM 服务（AI 大脑）
-│   │   ├── music.js        # 音乐服务（搜索/播放/详情/热评）
-│   │   └── weather.js      # 天气服务
+│   │   ├── server.js          # 主服务器（HTTP + WebSocket + 路由）
+│   │   ├── llm.js             # LLM 服务（AI 大脑）
+│   │   ├── weather.js         # 天气服务
+│   │   ├── music/             # 音乐平台服务
+│   │   │   ├── index.js       # 统一门面（多平台路由）
+│   │   │   ├── netease.js     # 网易云音乐
+│   │   │   ├── kuwo.js        # 酷我音乐
+│   │   │   ├── qqmusic.js     # QQ音乐
+│   │   │   └── kugou.js       # 酷狗音乐
+│   │   └── routes/            # API 路由
+│   │       ├── health.js      # 健康检查
+│   │       ├── config.js      # 配置读写/改密
+│   │       ├── music.js       # 音乐登录/状态/刷新
+│   │       └── search.js      # 搜索/AI总结
 │   ├── package.json
-│   └── .env                # 环境变量配置
+│   └── .env                   # 环境变量配置
 ├── frontend/
 │   ├── src/
-│   │   ├── App.jsx         # 前端主界面
-│   │   └── main.jsx        # 入口文件
+│   │   ├── App.jsx            # 前端主界面
+│   │   ├── main.jsx           # 入口文件
+│   │   └── components/
+│   │       └── IntroModal.jsx # 关于弹窗
 │   ├── package.json
 │   └── index.html
 ├── docker-compose.yml
 ├── Dockerfile
+├── REFACTOR_PLAN.md
 └── CHANGELOG.md
 ```
 
@@ -175,15 +190,38 @@ npm run build
 | LONGCAT_API_URL | ✅ | LLM API 地址（支持任何 OpenAI 格式） |
 | LONGCAT_MODEL | ✅ | LLM 模型名称 |
 | NETEASE_COOKIE | ✅ | 网易云音乐 Cookie |
+| KUWO_COOKIE | ❌ | 酷我音乐 Cookie |
+| QQMUSIC_COOKIE | ❌ | QQ音乐 Cookie |
+| KUGOU_COOKIE | ❌ | 酷狗音乐 Cookie |
 | ADMIN_PASSWORD | ❌ | 管理员密码，默认 versior123 |
 | MUSIC_SOURCE | ❌ | 默认音乐平台，默认 netease |
 | PORT | ❌ | 服务端口，默认 8834 |
 
 > 💡 所有 LLM 配置也可以在前端设置页面（⚙️ 配置 → 配置）中填写，无需重启服务。
+> 💡 搜索和播放链接使用**网易云官方 API**，不依赖第三方代理。
 
 ## 📝 更新日志
 
-见 [CHANGELOG.md](./CHANGELOG.md)
+### v1.2.3 (2026-04-28)
+- IntroModal 响应主题切换（亮色/暗色自适应）
+
+### v1.2.2 (2026-04-28)
+- 默认主题改为亮色
+- 恢复 IntroModal 像素风格 + 作者信息 + 主页链接
+
+### v1.2.1 (2026-04-28)
+- 修复点击播放列表/搜索结果不播放的问题
+- 修复音频 URL 失效后恢复播放失败
+
+### v1.2.0 (2026-04-28)
+- 恢复多平台支持（酷我、QQ音乐、酷狗）
+- LLM prompt 优化：优先推荐歌单外歌曲
+
+### v1.1.0 (2026-04-28)
+- 后端重构：music.js 拆分为独立平台文件 + 路由模块化
+- 前端重构：提取 IntroModal 组件
+
+见 [CHANGELOG.md](./CHANGELOG.md) 查看完整日志
 
 ## 📄 协议
 
