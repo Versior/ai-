@@ -90,6 +90,7 @@ class RadioServer {
         this.preloadedQueue = [];
         this.preloadedSay = '';
         this.lastSay = '';
+        this.lastQueue = [];
         this.playHistory = []; // 最近播放的歌曲 ID，用于去重
         this.maxHistory = 20;
     }
@@ -276,6 +277,7 @@ class RadioServer {
 
             this.currentTrack = track;
             this.lastSay = llmResponse.say;
+            this.lastQueue = llmResponse.queue || [];
             // 记录播放历史
             if (track.id) {
                 this.playHistory.push(String(track.id));
@@ -333,6 +335,7 @@ class RadioServer {
 
             this.currentTrack = track;
             this.lastSay = llmResponse.say;
+            this.lastQueue = llmResponse.queue || [];
             // 记录播放历史
             if (track.id) {
                 this.playHistory.push(String(track.id));
@@ -365,31 +368,63 @@ class RadioServer {
         console.log('⏳ 预加载下一首...');
 
         try {
-            const weather = await weatherService.getWeather(clientIP || '127.0.0.1');
-            const weatherDesc = weatherService.getWeatherDesc(weather);
-            const llmResponse = await llmService.generateResponse('', weatherDesc);
-            const trackInfo = llmResponse.track;
+            // 从当前 queue 中找下一首（跳过当前播放的）
+            const currentTitle = this.currentTrack?.title;
+            const queue = this.lastQueue || [];
+            let nextQueueTrack = null;
+            for (const t of queue) {
+                if (t.title !== currentTitle) {
+                    nextQueueTrack = t;
+                    break;
+                }
+            }
 
             let musicData;
-            try {
-                musicData = await musicService.searchSong(trackInfo.title);
-            } catch (searchErr) {
-                console.log(`⚠️ 预加载搜索失败: ${searchErr.message}，从歌单随机选`);
-                musicData = await musicService.pickRandomFromLibrary();
-                if (!musicData) throw new Error('预加载失败');
+            if (nextQueueTrack) {
+                // 从播放列表取下一首
+                try {
+                    musicData = await musicService.searchSong(nextQueueTrack.title);
+                } catch (searchErr) {
+                    console.log(`⚠️ 列表下一首搜索失败: ${searchErr.message}`);
+                }
+            }
+
+            // 列表没有或搜索失败，重新生成
+            if (!musicData) {
+                const weather = await weatherService.getWeather(clientIP || '127.0.0.1');
+                const weatherDesc = weatherService.getWeatherDesc(weather);
+                const llmResponse = await llmService.generateResponse('', weatherDesc);
+                const trackInfo = llmResponse.track;
+                try {
+                    musicData = await musicService.searchSong(trackInfo.title);
+                } catch (searchErr) {
+                    console.log(`⚠️ 预加载搜索失败: ${searchErr.message}，从歌单随机选`);
+                    musicData = await musicService.pickRandomFromLibrary();
+                    if (!musicData) throw new Error('预加载失败');
+                }
+                this.preloadedSay = llmResponse.say;
+                this.preloadedQueue = llmResponse.queue || [];
+            } else {
+                // 用列表的歌，重新生成 AI 总结
+                const weather = await weatherService.getWeather(clientIP || '127.0.0.1');
+                const weatherDesc = weatherService.getWeatherDesc(weather);
+                const llmResponse = await llmService.generateResponse(
+                    `请介绍歌曲《${nextQueueTrack.title}》- ${nextQueueTrack.artist || ''}，讲述这首歌的故事、情感或创作背景`,
+                    weatherDesc
+                );
+                this.preloadedSay = llmResponse.say;
+                this.preloadedQueue = llmResponse.queue || [];
             }
 
             this.preloadedTrack = {
-                id: musicData?.id || trackInfo.id || 0,
-                title: musicData?.title || trackInfo.title,
-                artist: musicData?.artist || trackInfo.artist,
+                id: musicData?.id || 0,
+                title: musicData?.title || nextQueueTrack?.title || '',
+                artist: musicData?.artist || nextQueueTrack?.artist || '',
                 url: musicData?.url || '',
                 cover: musicData?.cover || '',
                 hotComment: musicData?.hotComment || '',
                 lyrics: musicData?.lyrics || '',
             };
-            this.preloadedSay = llmResponse.say;
-            this.preloadedQueue = llmResponse.queue || [];
             console.log('✅ 预加载完成:', this.preloadedTrack.title);
 
             this.broadcast({
