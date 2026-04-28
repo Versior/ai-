@@ -133,6 +133,10 @@ class RadioServer {
                 return musicRoute.handleRefreshData(req, res, ctx);
             }
 
+            if (reqPath === '/api/like' && req.method === 'POST') {
+                return handleLikeRoute(req, res, ctx);
+            }
+
             if (reqPath === '/api/next' && req.method === 'POST') {
                 if (!this.isProcessing) {
                     this.isProcessing = true;
@@ -506,6 +510,50 @@ async function handleFetchTitle(req, res) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ title: targetUrl }));
     }
+}
+
+// ============================================================
+// 喜欢/取消喜欢
+// ============================================================
+function handleLikeRoute(req, res, ctx) {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+        try {
+            const { title, artist, liked } = JSON.parse(body);
+            if (!title) { res.writeHead(400); res.end(JSON.stringify({ error: 'Missing title' })); return; }
+            const fs = require('fs');
+            const path = require('path');
+            const prefsPath = path.join(__dirname, 'user-music-prefs.json');
+            let prefs = [];
+            try { if (fs.existsSync(prefsPath)) prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf8')); } catch (e) {}
+
+            if (liked) {
+                // 添加到喜欢列表（去重）
+                const exists = prefs.some(p => p.name === title && (p.artist || '') === (artist || ''));
+                if (!exists) {
+                    prefs.unshift({ name: title, artist: artist || '', likedAt: Date.now() });
+                    // 最多保留 500 首
+                    if (prefs.length > 500) prefs = prefs.slice(0, 500);
+                    fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2));
+                    console.log(`❤️ 喜欢: ${title} - ${artist}`);
+                }
+            } else {
+                // 从喜欢列表移除
+                const before = prefs.length;
+                prefs = prefs.filter(p => !(p.name === title && (p.artist || '') === (artist || '')));
+                if (prefs.length !== before) {
+                    fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2));
+                    console.log(`💔 取消喜欢: ${title} - ${artist}`);
+                }
+            }
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: true, liked, count: prefs.length }));
+        } catch (e) {
+            res.writeHead(400);
+            res.end(JSON.stringify({ error: e.message }));
+        }
+    });
 }
 
 // ============================================================

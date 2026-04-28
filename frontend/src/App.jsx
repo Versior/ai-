@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Play, Pause, SkipBack, SkipForward, Square,
-  Volume2, VolumeX, ArrowUp, Info, Settings,
+  Volume2, VolumeX, ArrowUp, Heart, Info, Settings,
   Cloud, Sun, CloudRain, CloudSnow, Wind, Droplets,
   Music, Radio, ExternalLink, X, Loader
 } from 'lucide-react';
@@ -9,7 +9,7 @@ import IntroModal from './components/IntroModal';
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.3.9';
+const APP_VERSION = '1.3.11';
 
 export default function App() {
   const [theme, setTheme] = useState('light');
@@ -238,6 +238,7 @@ export default function App() {
 
   // === 歌词 ===
   const [lyrics, setLyrics] = useState([]); // [{time, text}]
+  const [liked, setLiked] = useState(false);
   const skipCooldownRef = useRef(false);
   const [currentLyricIdx, setCurrentLyricIdx] = useState(-1);
   const currentLyricIdxRef = useRef(-1);
@@ -371,6 +372,24 @@ export default function App() {
       audioRef.current.volume = 0;
       setMuted(true);
     }
+  };
+
+  const handleLike = async () => {
+    if (!currentTrack.title) return;
+    const newLiked = !liked;
+    setLiked(newLiked);
+    // 通知后端更新用户偏好
+    try {
+      await fetch(`${API_BASE}/api/like`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: currentTrack.title,
+          artist: currentTrack.artist,
+          liked: newLiked
+        })
+      });
+    } catch (e) { console.warn('like failed', e); }
   };
 
   // 进度条拖动
@@ -942,7 +961,9 @@ export default function App() {
                     {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
                   </button>
                   <button onClick={handleSkipForward} className={`w-8 h-8 rounded-full border ${brd} flex justify-center items-center hover:text-[#2ee4a6] hover:border-[#2ee4a6] transition-all`}><SkipForward className="w-3.5 h-3.5 fill-current" /></button>
-                  <button onClick={handleStop} className={`w-8 h-8 rounded-full border ${brd} flex justify-center items-center hover:text-[#2ee4a6] hover:border-[#2ee4a6] transition-all`}><Square className="w-3.5 h-3.5 fill-current" /></button>
+                  <button onClick={handleLike} className={`w-8 h-8 rounded-full border ${brd} flex justify-center items-center transition-all ${liked ? 'text-red-500 border-red-500 bg-red-500/10' : 'hover:text-red-400 hover:border-red-400'}`}>
+                    {liked ? <Heart className="w-3.5 h-3.5 fill-current" /> : <Heart className="w-3.5 h-3.5" />}
+                  </button>
                   <div className={`flex items-center gap-2 ml-2 px-2 py-1 rounded-full ${isDark ? 'bg-[#1a1a21]' : 'bg-gray-200'}`}>
                     <button onClick={handleToggleMute} className={`p-1 rounded-full transition-all ${muted ? 'text-red-500 bg-red-500/10' : isDark ? 'text-gray-500 hover:text-[#2ee4a6]' : 'text-gray-600 hover:text-[#2ee4a6]'}`}>
                       {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
@@ -986,19 +1007,6 @@ export default function App() {
               </div>
             )}
 
-            {/* 热评板块（播放列表上方） */}
-            {currentTrack.hotComment && (
-              <div className={`border-t ${brd} relative`}>
-                {isDark && <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#2ee4a6]/20 to-transparent" />}
-                <div className={`px-6 py-4 ${isDark ? 'bg-[#0d0d10]' : 'bg-gray-50'}`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={`text-[10px] ${isDark ? 'text-[#2ee4a6]/70' : 'text-gray-500'} tracking-[0.2em] uppercase font-mono`}>💬 hot_comment</span>
-                  </div>
-                  <p className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-700'} leading-relaxed`}>{currentTrack.hotComment}</p>
-                </div>
-              </div>
-            )}
-
             {/* 播放列表 */}
             <div className={`${isDark ? 'bg-[#0f0f13]' : 'bg-gray-50'} border-t ${brd}`}>
               <div className={`flex justify-between px-6 py-2.5 text-[10px] tracking-widest border-b ${brd} text-gray-500`}>
@@ -1026,6 +1034,19 @@ export default function App() {
                 })}
               </div>
             </div>
+
+            {/* 热评板块（播放列表下方） */}
+            {currentTrack.hotComment && (
+              <div className={`border-t ${brd} relative`}>
+                {isDark && <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#2ee4a6]/20 to-transparent" />}
+                <div className={`px-6 py-4 ${isDark ? 'bg-[#0d0d10]' : 'bg-gray-50'}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`text-[10px] ${isDark ? 'text-[#2ee4a6]/70' : 'text-gray-500'} tracking-[0.2em] uppercase font-mono`}>💬 hot_comment</span>
+                  </div>
+                  <p className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-700'} leading-relaxed`}>{currentTrack.hotComment}</p>
+                </div>
+              </div>
+            )}
 
             {/* AI 交互 */}
             <div className={`p-6 ${isDark ? 'bg-[#111116]' : 'bg-white'} border-t ${brd}`}>

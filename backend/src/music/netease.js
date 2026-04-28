@@ -255,7 +255,7 @@ async function searchSong(songName, excludeIds = []) {
 
         if (searchRes.data?.code === 200 && searchRes.data?.result?.songs?.length > 0) {
             const songs = searchRes.data.result.songs;
-            console.log(`  ✅ 搜索成功: ${songs.length} 首`);
+            console.log(`  ✅ 搜索成功: ${songs.length} 首，过滤后 ${filtered.length} 首`);
             // 过滤掉已播放的歌曲
             const filtered = excludeIds.length > 0
                 ? songs.filter(s => !excludeIds.includes(String(s.id)))

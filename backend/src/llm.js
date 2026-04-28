@@ -210,6 +210,11 @@ class LLMService {
                 if (tracksSummary) {
                     userMessage += `\n\n【用户收藏的音乐（${this.userTracks.length} 首中的部分）】\n${tracksSummary}`;
                 }
+                // 最近喜欢的歌曲（权重更高）
+                const likedTracks = this.userTracks.filter(t => t.likedAt).slice(0, 10);
+                if (likedTracks.length > 0) {
+                    userMessage += `\n\n【用户最近喜欢的歌曲（优先参考）】\n${likedTracks.map(t => `${t.name} - ${t.artist}`).join('\n')}`;
+                }
                 userMessage += `\n\n⚠️ 核心要求：\n1. 必须基于上面的用户品味和收藏风格来推荐\n2. 推荐用户没听过但风格相似的新歌（不要从收藏列表里选）\n3. 播报词以歌曲和歌手为中心，分享歌曲背后的故事、情感或创作背景\n4. 不要被天气关键词束缚，天气仅作氛围参考`;
                 if (weatherDesc) userMessage += `\n\n${weatherDesc}`;
             }
@@ -222,7 +227,7 @@ class LLMService {
                         { role: "system", content: this.systemPrompt },
                         { role: "user", content: userMessage }
                     ],
-                    temperature: 0.3,
+                    temperature: 0.7,
                     max_tokens: 300
                 },
                 {
