@@ -267,9 +267,14 @@ class RadioServer {
             try {
                 musicData = await musicService.searchSong(trackInfo.title, excludeIds);
             } catch (searchErr) {
-                console.log(`⚠️ 搜索失败: ${searchErr.message}，从歌单随机选一首`);
-                musicData = await musicService.pickRandomFromLibrary();
-                if (!musicData) throw new Error('搜索失败且歌单中无可用歌曲');
+                console.log(`⚠️ 精确搜索失败: ${searchErr.message}，尝试模糊搜索`);
+                try {
+                    musicData = await musicService.searchSong(trackInfo.title, []);
+                } catch (e2) {
+                    console.log(`⚠️ 模糊搜索也失败，从歌单随机选`);
+                    musicData = await musicService.pickRandomFromLibrary();
+                    if (!musicData) throw new Error('搜索失败且歌单中无可用歌曲');
+                }
             }
             // 同名去重（模糊匹配，忽略大小写和空格）
             if (musicData) {
@@ -346,9 +351,14 @@ class RadioServer {
             try {
                 musicData = await musicService.searchSong(trackInfo.title, excludeIds);
             } catch (searchErr) {
-                console.log(`⚠️ 搜索失败: ${searchErr.message}，从歌单随机选一首`);
-                musicData = await musicService.pickRandomFromLibrary();
-                if (!musicData) throw new Error('搜索失败且歌单中无可用歌曲');
+                console.log(`⚠️ 精确搜索失败: ${searchErr.message}，尝试模糊搜索`);
+                try {
+                    musicData = await musicService.searchSong(trackInfo.title, []);
+                } catch (e2) {
+                    console.log(`⚠️ 模糊搜索也失败，从歌单随机选`);
+                    musicData = await musicService.pickRandomFromLibrary();
+                    if (!musicData) throw new Error('搜索失败且歌单中无可用歌曲');
+                }
             }
             // 同名去重（模糊匹配，忽略大小写和空格）
             if (musicData) {
@@ -443,7 +453,7 @@ class RadioServer {
                 }
             }
 
-            // 列表没有或搜索失败，重新生成
+            // 列表没有或搜索失败，重新生成（加模糊搜索兜底）
             if (!musicData) {
                 const weather = await weatherService.getWeather(clientIP || '127.0.0.1');
                 const weatherDesc = weatherService.getWeatherDesc(weather);
