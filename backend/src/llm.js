@@ -16,8 +16,8 @@ class LLMService {
 1. 全程中文回复
 2. 每次回复必须是严格JSON格式，不要包含任何JSON以外的文字
 3. JSON格式：{"say":"短播报词（20-40字），包含：①为什么推荐这首歌 ②歌曲风格特点，不要描述天气","track":{"title":"歌曲名","artist":"歌手"},"queue":[{"title":"预告歌曲1","artist":"歌手"},{"title":"预告歌曲2","artist":"歌手"},{"title":"预告歌曲3","artist":"歌手"},{"title":"预告歌曲4","artist":"歌手"},{"title":"预告歌曲5","artist":"歌手"}]}
-4. 根据用户的音乐品味画像推荐歌曲，优先从用户收藏列表中选择，也可以推荐列表中不存在但风格相似的歌手和歌曲
-5. 推荐时要考虑用户偏好的语种、风格、歌手类型，推荐相似风格的歌曲
+4. 推荐歌曲时，【必须优先推荐用户歌单中不存在的歌曲】，即推荐用户没收藏过但可能喜欢的歌，帮助用户发现新音乐
+5. 推荐时要考虑用户偏好的语种、风格、歌手类型，推荐相似风格但不同歌手的歌曲，避免老是推荐相同的歌
 6. 用户指定风格时必须严格遵守，所有推荐必须风格一致，这是最高优先级规则
 7. 天气仅作辅助参考，不要覆盖用户指定的风格
 8. queue字段必须包含3-5首预告歌曲，展示即将播放的曲目，所有预告歌曲也必须符合用户指定的风格
@@ -45,7 +45,7 @@ class LLMService {
         console.log('🔄 LLM 配置已重载:', { apiUrl: this.apiUrl, model: this.model });
     }
 
-    getUserTracksSummary(maxCount = 30) {
+    getUserTracksSummary(maxCount = 10) {
         if (this.userTracks.length === 0) return '';
         const shuffled = [...this.userTracks].sort(() => Math.random() - 0.5);
         return shuffled.slice(0, maxCount).map(t => `${t.name} - ${t.artist}`).join('\n');
@@ -180,7 +180,7 @@ class LLMService {
 
     async generateResponse(userInput = "", weatherDesc = '') {
         try {
-            const tracksSummary = this.getUserTracksSummary(30);
+            const tracksSummary = this.getUserTracksSummary(10);
             
             let userMessage;
             if (userInput) {
@@ -195,7 +195,7 @@ class LLMService {
                 if (weatherDesc) userMessage += `\n\n${weatherDesc}`;
                 if (tasteProfile) userMessage += `\n\n【用户音乐品味】\n${tasteProfile}`;
                 if (styleTracks) userMessage += `\n\n【用户收藏的音乐（${styleStr ? '风格匹配' : '随机'}）】\n${styleTracks}`;
-                userMessage += `\n\n请作为 Versior 用中文响应。根据用户品味推荐，优先从收藏列表选择，也可推荐风格相似的相似歌曲。`;
+                userMessage += `\n\n请作为 Versior 用中文响应。根据用户品味推荐，但【不要从上面的收藏列表里选歌】，推荐用户没听过但风格相似的新歌，帮用户发现新音乐。`;
                 
                 if (styleStr) {
                     userMessage += `\n\n⚠️ 重要：用户指定了「${styleStr}」风格，所有推荐必须严格遵守返个风格，不要偏离。天气仅作辅助参考，不要覆盖用户风格。`;
@@ -209,7 +209,7 @@ class LLMService {
                 if (tasteProfile) userMessage += `\n\n【用户音乐品味】\n${tasteProfile}`;
                 if (tracksSummary) {
                     userMessage += `\n\n【用户收藏的音乐（部分）】\n${tracksSummary}`;
-                    userMessage += `\n\n推荐时优先从收藏列表中选择，也可以推荐风格相似的相似歌曲。`;
+                    userMessage += `\n\n推荐时【不要从上面的收藏列表里选歌】，推荐用户没听过但风格相似的新歌，帮用户发现新音乐。`;
                 }
             }
             

@@ -1,4 +1,5 @@
-const netease = require('../music/netease');
+const fs = require('fs');
+const path = require('path');
 
 function readBody(req) {
     return new Promise((resolve, reject) => {
@@ -18,38 +19,32 @@ async function handleLogin(req, res, ctx) {
 
     if (!platform) {
         res.writeHead(400);
-        res.end(JSON.stringify({ success: false, error: '缺少参数' }));
-        return;
-    }
-
-    // 当前只支持网易云
-    if (platform !== 'netease') {
-        res.writeHead(400);
-        res.end(JSON.stringify({ success: false, error: '当前只支持网易云音乐' }));
+        res.end(JSON.stringify({ success: false, error: '缺少 platform 参数' }));
         return;
     }
 
     let result;
     if (cookie) {
-        result = await ctx.musicService.login(username, password, cookie);
-    } else {
+        result = await ctx.musicService.login(username, password, cookie, platform);
+    } else if (platform === 'netease') {
         if (!username || !password) {
             res.writeHead(400);
             res.end(JSON.stringify({ success: false, error: '缺少账号或密码' }));
             return;
         }
-        result = await ctx.musicService.login(username, password);
+        result = await ctx.musicService.login(username, password, null, platform);
+    } else {
+        res.writeHead(400);
+        res.end(JSON.stringify({ success: false, error: '酷我/QQ音乐/酷狗请使用 Cookie 登录' }));
+        return;
     }
 
     if (result.success) {
         result.loggedIn = true;
         console.log(`✅ ${platform} 登录成功: ${result.nickname}`);
 
-        // 获取用户歌曲数据
         try {
-            const uniqueTracks = await ctx.musicService.fetchUserData(result.uid);
-            const fs = require('fs');
-            const path = require('path');
+            const uniqueTracks = await ctx.musicService.fetchUserData(result.uid, platform);
             const prefsPath = path.join(__dirname, '..', 'user-music-prefs.json');
             fs.writeFileSync(prefsPath, JSON.stringify(uniqueTracks, null, 2));
             console.log(`  ✅ 已保存 ${uniqueTracks.length} 首歌曲`);
@@ -77,15 +72,8 @@ async function handleStatus(req, res, ctx) {
 async function handleRefreshData(req, res, ctx) {
     const body = await readBody(req);
     const { platform } = body;
-
-    if (platform && platform !== 'netease') {
-        res.writeHead(400);
-        res.end(JSON.stringify({ success: false, error: '当前只支持网易云音乐' }));
-        return;
-    }
-
     try {
-        const result = await ctx.musicService.refreshUserData();
+        const result = await ctx.musicService.refreshUserData(platform);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(result));
     } catch (e) {

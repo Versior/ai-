@@ -676,7 +676,7 @@ export default function App() {
                           <h4 className="text-[10px] text-[#2ee4a6] uppercase tracking-wider font-bold">🎵 基于你的偏好推荐</h4>
                           <span className="text-[9px] text-gray-500">{Object.values(musicLoginStatus).reduce((sum, s) => sum + (s?.trackCount || 0), 0)} 首歌曲</span>
                         </div>
-                        <p className="text-[9px] text-gray-400 leading-relaxed">已登录 {Object.entries(musicLoginStatus).filter(([_, s]) => s?.success).map(([p, s]) => s.nickname || p).join('、')}，AI 会从你的歌单中挑选推荐曲目。</p>
+                        <p className="text-[9px] text-gray-400 leading-relaxed">已登录 {Object.entries(musicLoginStatus).filter(([_, s]) => s?.success).map(([p, s]) => s.nickname || p).join('、')}，AI 会根据你的品味推荐歌单内外的歌曲，帮你发现新音乐。</p>
                         <button onClick={() => { if (wsRef.current && wsConnected) { wsRef.current.send(JSON.stringify({ type: 'user_input', text: '根据我的歌单推荐一首歌' })); } }} className="w-full text-[10px] font-bold py-1.5 rounded-lg bg-[#2ee4a6]/10 text-[#2ee4a6] hover:bg-[#2ee4a6]/20 transition-colors">🎲 换一批推荐</button>
                       </div>
                     )}
