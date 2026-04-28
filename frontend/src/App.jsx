@@ -9,7 +9,7 @@ import IntroModal from './components/IntroModal';
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.2.1';
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -230,26 +230,30 @@ export default function App() {
   // === 播放核心 ===
   const userInteractedRef = useRef(false);
 
-  const doPlayTrack = useCallback((track) => {
+  const doPlayTrack = useCallback((track, autoPlay = false) => {
     setCurrentTrack(track);
     if (!audioRef.current || !track.url) return;
-    // 直接用原始 CDN URL，不走代理（代理会被 CDN 防盗链拦截）
-    audioRef.current.src = track.url;
-    // 只有用户交互后才自动播放
-    if (userInteractedRef.current) {
-      const playPromise = audioRef.current.play();
-      if (playPromise) {
-        playPromise.then(() => setIsPlaying(true)).catch(() => {});
-      }
+    const audio = audioRef.current;
+    // URL 变化时才重新加载
+    if (audio.src !== track.url) {
+      audio.src = track.url;
+      audio.load();
     }
-    // 不在这里发 preload_next，播放到 80% 时自动触发
-  }, [wsConnected]);
+    // 用户已交互过，或明确要求自动播放
+    if (userInteractedRef.current || autoPlay) {
+      audio.play().then(() => setIsPlaying(true)).catch((e) => {
+        console.warn('播放失败:', e.message);
+        setIsPlaying(false);
+      });
+    }
+  }, []);
 
   // === 播放列表点击：直接播放，不触发 LLM ===
   // === 播放列表点击：播放 + 生成 AI 总结 ===
   const handleQueueClick = useCallback(async (track) => {
+    userInteractedRef.current = true;
     if (track.url) {
-      doPlayTrack(track);
+      doPlayTrack(track, true);
       setSystemMessage('正在生成推荐...');
       try {
         const res = await fetch(API_BASE + '/api/ai-summary?title=' + encodeURIComponent(track.title) + '&artist=' + encodeURIComponent(track.artist || ''));
@@ -264,7 +268,7 @@ export default function App() {
       const res = await fetch(API_BASE + '/api/search?title=' + encodeURIComponent(track.title) + '&artist=' + encodeURIComponent(track.artist));
       const data = await res.json();
       if (data.success && data.track && data.track.url) {
-        doPlayTrack(data.track);
+        doPlayTrack(data.track, true);
         setSystemMessage('正在生成推荐...');
         try {
           const aiRes = await fetch(API_BASE + '/api/ai-summary?title=' + encodeURIComponent(data.track.title) + '&artist=' + encodeURIComponent(data.track.artist || ''));
@@ -289,12 +293,12 @@ export default function App() {
       setIsPlaying(false);
     } else {
       if (!audioRef.current.src && currentTrack.url) {
-        doPlayTrack(currentTrack);
+        doPlayTrack(currentTrack, true);
         return;
       }
-      audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {
-        audioRef.current.muted = true;
-        audioRef.current.play().then(() => { setIsPlaying(true); setTimeout(() => { audioRef.current.muted = false; }, 100); });
+      audioRef.current.play().then(() => setIsPlaying(true)).catch((e) => {
+        console.warn('播放失败:', e.message);
+        setIsPlaying(false);
       });
     }
   };
@@ -358,13 +362,18 @@ export default function App() {
         const data = await response.json();
         if (data.url) {
           console.log('✅ 获取新链接，恢复播放...');
-          setCurrentTrack(prev => ({ ...prev, url: data.url }));
-          setTimeout(() => {
-            if (audioRef.current) {
-              audioRef.current.currentTime = brokenTime;
-              audioRef.current.play().catch(err => console.error('恢复播放失败:', err));
-            }
-          }, 500);
+          if (audioRef.current) {
+            audioRef.current.src = data.url;
+            audioRef.current.currentTime = brokenTime;
+            audioRef.current.play().then(() => {
+              setCurrentTrack(prev => ({ ...prev, url: data.url }));
+            }).catch(err => {
+              console.error('恢复播放失败:', err);
+              setCurrentTrack(prev => ({ ...prev, url: data.url }));
+            });
+          } else {
+            setCurrentTrack(prev => ({ ...prev, url: data.url }));
+          }
           return;
         }
       } catch (err) {
@@ -570,7 +579,7 @@ export default function App() {
         input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #2ee4a6; cursor: grab; border: 3px solid #111116; box-shadow: 0 0 8px rgba(46,228,166,0.5); }
       `}</style>
 
-      <audio ref={audioRef} onTimeUpdate={onTimeUpdate} onEnded={onTrackEnd} onLoadedMetadata={() => { if (audioRef.current) { setDuration(audioRef.current.duration); } }} onError={handleAudioError} preload="auto" />
+      <audio ref={audioRef} onTimeUpdate={onTimeUpdate} onEnded={onTrackEnd} onLoadedMetadata={() => { if (audioRef.current) { setDuration(audioRef.current.duration); } }} onError={handleAudioError} preload="none" />
 
       {/* ===== 弹窗 ===== */}
       {showIntro && (

@@ -1,5 +1,12 @@
 # 📋 Versior AI 电台 - 更新日志
 
+## v1.2.1 (2026-04-28)
+- 🔧 修复：点击播放列表/搜索结果不播放（userInteractedRef 未标记）
+- 🔧 修复：音频 URL 失效后恢复播放未更新 src
+- 🔧 修复：doPlayTrack 加 load() 确保 URL 变化时重新加载
+- 🔧 修复：audio preload 从 auto 改为 none 避免缓存失效 URL
+- 🔧 移除 togglePlay 中有问题的静音绕过逻辑
+
 ## v1.2.0 (2026-04-28)
 - 🎵 恢复多平台支持：酷我、QQ音乐、酷狗（独立平台文件）
 - 🤖 LLM prompt 优化：推荐列表外歌曲，帮用户发现新音乐
