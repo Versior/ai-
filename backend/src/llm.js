@@ -15,7 +15,7 @@ class LLMService {
 规则：
 1. 全程中文回复
 2. 每次回复必须是严格JSON格式，不要包含任何JSON以外的文字
-3. JSON格式：{"say":"短播报词（20-40字），包含：①为什么推荐这首歌 ②歌曲风格特点，不要描述天气","track":{"title":"歌曲名","artist":"歌手"},"queue":[{"title":"预告歌曲1","artist":"歌手"},{"title":"预告歌曲2","artist":"歌手"},{"title":"预告歌曲3","artist":"歌手"},{"title":"预告歌曲4","artist":"歌手"},{"title":"预告歌曲5","artist":"歌手"}]}
+3. JSON格式：{"say":"第一人称叙事风格的歌曲介绍（40-80字），以「我」的视角讲述这首歌的故事、情感或创作背景，不要出现「推荐」字样，不要描述天气","track":{"title":"歌曲名","artist":"歌手"},"queue":[{"title":"预告歌曲1","artist":"歌手"},{"title":"预告歌曲2","artist":"歌手"},{"title":"预告歌曲3","artist":"歌手"},{"title":"预告歌曲4","artist":"歌手"},{"title":"预告歌曲5","artist":"歌手"}]}
 4. 推荐歌曲时，【必须优先推荐用户歌单中不存在的歌曲】，即推荐用户没收藏过但可能喜欢的歌，帮助用户发现新音乐
 5. 推荐时要考虑用户偏好的语种、风格、歌手类型，推荐相似风格但不同歌手的歌曲，避免老是推荐相同的歌
 6. 用户指定风格时必须严格遵守，所有推荐必须风格一致，这是最高优先级规则
@@ -172,7 +172,7 @@ class LLMService {
         }
         
         return {
-            say: (data.say || "欢迎来到 Versior，听见未来电波...").substring(0, 100),
+            say: (data.say || "欢迎来到 Versior，听见未来电波...").substring(0, 80),
             track: { title: trackTitle, artist: trackArtist },
             queue: queue.slice(0, 5)
         };

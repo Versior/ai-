@@ -3,8 +3,8 @@ import { X, ExternalLink } from 'lucide-react';
 
 export default function IntroModal({ onDismiss, onClose, isDark }) {
     return (
-        <div className={`fixed inset-0 z-[100] backdrop-blur-md flex flex-col justify-center items-center p-6 animate-in fade-in duration-300 ${isDark ? 'bg-black/90' : 'bg-white/90'}`}>
-            <div className={`${isDark ? 'bg-[#111116] border-gray-800' : 'bg-white border-gray-200'} border rounded-2xl p-8 max-w-lg w-full text-center relative`}>
+        <div className={`fixed inset-0 z-[100] backdrop-blur-md flex flex-col justify-center items-center p-6 animate-in fade-in duration-300 ${isDark ? 'bg-black/90' : 'bg-black/80'}`}>
+            <div className={`${isDark ? 'bg-[#111116] border-gray-800' : 'bg-white border-gray-300 shadow-2xl'} border rounded-2xl p-8 max-w-lg w-full text-center relative`}>
                 <button onClick={onClose} className={`absolute top-4 right-4 ${isDark ? 'text-gray-600 hover:text-gray-400' : 'text-gray-400 hover:text-gray-600'}`}>
                     <X className="w-5 h-5" />
                 </button>
@@ -12,15 +12,15 @@ export default function IntroModal({ onDismiss, onClose, isDark }) {
                 <h2 className="text-5xl font-pixel text-[#2ee4a6] mb-2 drop-shadow-[0_0_10px_rgba(46,228,166,0.5)]">
                     Versior
                 </h2>
-                <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'} tracking-[0.3em] uppercase mb-6 font-pixel`}>
+                <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'} tracking-[0.3em] uppercase mb-6 font-pixel`}>
                     AI 神经元电台
                 </p>
 
-                <div className={`${isDark ? 'bg-[#0a0a0c] border-gray-800 text-gray-300' : 'bg-gray-50 border-gray-200 text-gray-700'} border rounded-xl p-5 text-left space-y-3 mb-6`}>
-                    <p className="text-sm leading-relaxed font-pixel">
+                <div className={`${isDark ? 'bg-[#0a0a0c] border-gray-800 text-gray-300' : 'bg-gray-100 border-gray-300 text-gray-800'} border rounded-xl p-5 text-left space-y-3 mb-6`}>
+                    <p className={`text-sm leading-relaxed font-pixel ${isDark ? '' : 'text-gray-900'}`}>
                         欢迎来到 <span className="text-[#2ee4a6] font-bold">Versior</span>，你的专属赛博朋克 AI 音乐电台。
                     </p>
-                    <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'} leading-relaxed space-y-1.5 font-pixel`}>
+                    <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'} leading-relaxed space-y-1.5 font-pixel`}>
                         <p>• <strong className={isDark ? 'text-gray-300' : 'text-gray-700'}>作者：</strong>遇事开心</p>
                         <p>• <strong className={isDark ? 'text-gray-300' : 'text-gray-700'}>主页：</strong>
                             <a

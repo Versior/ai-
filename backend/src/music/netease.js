@@ -232,9 +232,9 @@ async function fetchAllUserTracks(uid) {
 // 搜索
 // ============================================================
 
-async function searchSong(songName) {
+async function searchSong(songName, excludeIds = []) {
     const cookie = await getCookie();
-    console.log(`🔍 搜索歌曲: ${songName}`);
+    console.log(`🔍 搜索歌曲: ${songName}${excludeIds.length ? ` (排除 ${excludeIds.length} 首)` : ''}`);
 
     if (!cookie) {
         throw new Error('未配置网易云 Cookie，无法搜索');
@@ -243,7 +243,7 @@ async function searchSong(songName) {
     try {
         const searchRes = await axios.post(
             `${BASE_URL}/api/cloudsearch/pc`,
-            `s=${encodeURIComponent(songName)}&type=1&limit=5&offset=0`,
+            `s=${encodeURIComponent(songName)}&type=1&limit=10&offset=0`,
             {
                 headers: {
                     ...buildHeaders(cookie),
@@ -256,7 +256,15 @@ async function searchSong(songName) {
         if (searchRes.data?.code === 200 && searchRes.data?.result?.songs?.length > 0) {
             const songs = searchRes.data.result.songs;
             console.log(`  ✅ 搜索成功: ${songs.length} 首`);
-            for (const song of songs.slice(0, 3)) {
+            // 过滤掉已播放的歌曲
+            const filtered = excludeIds.length > 0
+                ? songs.filter(s => !excludeIds.includes(String(s.id)))
+                : songs;
+            if (filtered.length === 0) {
+                console.log('  ⚠️ 所有结果都已播放过，返回原列表');
+            }
+            const candidates = filtered.length > 0 ? filtered : songs;
+            for (const song of candidates.slice(0, 5)) {
                 try {
                     return await buildTrackInfo(song, cookie);
                 } catch (e) { continue; }

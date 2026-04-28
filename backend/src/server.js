@@ -90,6 +90,8 @@ class RadioServer {
         this.preloadedQueue = [];
         this.preloadedSay = '';
         this.lastSay = '';
+        this.playHistory = []; // 最近播放的歌曲 ID，用于去重
+        this.maxHistory = 20;
     }
 
     start() {
@@ -252,9 +254,10 @@ class RadioServer {
             const llmResponse = await llmService.generateResponse(text, weatherDesc);
             const trackInfo = llmResponse.track;
 
+            const excludeIds = this.playHistory;
             let musicData;
             try {
-                musicData = await musicService.searchSong(trackInfo.title);
+                musicData = await musicService.searchSong(trackInfo.title, excludeIds);
             } catch (searchErr) {
                 console.log(`⚠️ 搜索失败: ${searchErr.message}，从歌单随机选一首`);
                 musicData = await musicService.pickRandomFromLibrary();
@@ -272,6 +275,13 @@ class RadioServer {
 
             this.currentTrack = track;
             this.lastSay = llmResponse.say;
+            // 记录播放历史
+            if (track.id) {
+                this.playHistory.push(String(track.id));
+                if (this.playHistory.length > this.maxHistory) {
+                    this.playHistory.shift();
+                }
+            }
 
             this.broadcast({
                 type: 'dj_response',
@@ -300,9 +310,10 @@ class RadioServer {
             const llmResponse = await llmService.generateResponse('', weatherDesc);
             const trackInfo = llmResponse.track;
 
+            const excludeIds = this.playHistory;
             let musicData;
             try {
-                musicData = await musicService.searchSong(trackInfo.title);
+                musicData = await musicService.searchSong(trackInfo.title, excludeIds);
             } catch (searchErr) {
                 console.log(`⚠️ 搜索失败: ${searchErr.message}，从歌单随机选一首`);
                 musicData = await musicService.pickRandomFromLibrary();
@@ -320,6 +331,13 @@ class RadioServer {
 
             this.currentTrack = track;
             this.lastSay = llmResponse.say;
+            // 记录播放历史
+            if (track.id) {
+                this.playHistory.push(String(track.id));
+                if (this.playHistory.length > this.maxHistory) {
+                    this.playHistory.shift();
+                }
+            }
 
             this.broadcast({
                 type: 'dj_broadcast',

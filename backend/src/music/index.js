@@ -78,8 +78,8 @@ class MusicService {
 
     // ---------- 搜索 & 播放（仅网易云） ----------
 
-    async searchSong(songName) {
-        return netease.searchSong(songName);
+    async searchSong(songName, excludeIds) {
+        return netease.searchSong(songName, excludeIds);
     }
 
     async getSongUrl(songId) {
