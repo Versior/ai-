@@ -9,7 +9,7 @@ import IntroModal from './components/IntroModal';
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.3.6';
+const APP_VERSION = '1.3.7';
 
 export default function App() {
   const [theme, setTheme] = useState('light');
@@ -961,6 +961,38 @@ export default function App() {
               </div>
             </div>
 
+            {/* 歌词滚动板块（播放列表上方） */}
+            {lyrics.length > 0 && (
+              <div className={`border-t ${brd} relative`}>
+                {isDark && <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#2ee4a6]/20 to-transparent" />}
+                <div className={`px-6 py-3 ${isDark ? 'bg-[#0d0d10]' : 'bg-gray-50'} flex items-center gap-2`}>
+                  <span className={`text-[10px] ${isDark ? 'text-[#2ee4a6]/70' : 'text-gray-500'} tracking-[0.2em] uppercase font-mono`}>🎵 lyrics</span>
+                </div>
+                <div className={`px-6 pb-4 ${isDark ? 'bg-[#0d0d10]' : 'bg-gray-50'} overflow-hidden`}>
+                  <div className="relative h-28 overflow-y-auto scrollbar-hide" ref={lyricScrollRef}>
+                    <div className="py-10">
+                      {lyrics.map((line, i) => (
+                        <p key={i} className={`text-xs py-1 transition-all duration-300 ${i === currentLyricIdx ? (isDark ? 'text-[#2ee4a6] font-medium text-sm' : 'text-[#2ee4a6] font-medium text-sm') : (isDark ? 'text-gray-500' : 'text-gray-400')}`}>{line.text}</p>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 热评板块（播放列表上方） */}
+            {currentTrack.hotComment && (
+              <div className={`border-t ${brd} relative`}>
+                {isDark && <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#2ee4a6]/20 to-transparent" />}
+                <div className={`px-6 py-4 ${isDark ? 'bg-[#0d0d10]' : 'bg-gray-50'}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`text-[10px] ${isDark ? 'text-[#2ee4a6]/70' : 'text-gray-500'} tracking-[0.2em] uppercase font-mono`}>💬 hot_comment</span>
+                  </div>
+                  <p className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-700'} leading-relaxed`}>{currentTrack.hotComment}</p>
+                </div>
+              </div>
+            )}
+
             {/* 播放列表 */}
             <div className={`${isDark ? 'bg-[#0f0f13]' : 'bg-gray-50'} border-t ${brd}`}>
               <div className={`flex justify-between px-6 py-2.5 text-[10px] tracking-widest border-b ${brd} text-gray-500`}>
@@ -988,25 +1020,6 @@ export default function App() {
                 })}
               </div>
             </div>
-
-            {/* 歌词滚动板块 */}
-            {lyrics.length > 0 && (
-              <div className={`border-t ${brd} relative`}>
-                {isDark && <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#2ee4a6]/20 to-transparent" />}
-                <div className={`px-6 py-3 ${isDark ? 'bg-[#0d0d10]' : 'bg-gray-50'} flex items-center gap-2`}>
-                  <span className={`text-[10px] ${isDark ? 'text-[#2ee4a6]/70' : 'text-gray-500'} tracking-[0.2em] uppercase font-mono`}>🎵 lyrics</span>
-                </div>
-                <div className={`px-6 pb-4 ${isDark ? 'bg-[#0d0d10]' : 'bg-gray-50'} overflow-hidden`}>
-                  <div className="relative h-28 overflow-y-auto scrollbar-hide" ref={lyricScrollRef}>
-                    <div className="py-10">
-                      {lyrics.map((line, i) => (
-                        <p key={i} className={`text-xs py-1 transition-all duration-300 ${i === currentLyricIdx ? (isDark ? 'text-[#2ee4a6] font-medium text-sm' : 'text-[#2ee4a6] font-medium text-sm') : (isDark ? 'text-gray-500' : 'text-gray-400')}`}>{line.text}</p>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* AI 交互 */}
             <div className={`p-6 ${isDark ? 'bg-[#111116]' : 'bg-white'} border-t ${brd}`}>
