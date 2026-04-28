@@ -9,7 +9,7 @@ import IntroModal from './components/IntroModal';
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.3.11';
+const APP_VERSION = '1.3.16';
 
 export default function App() {
   const [theme, setTheme] = useState('light');
@@ -242,7 +242,9 @@ export default function App() {
   const skipCooldownRef = useRef(false);
   const [currentLyricIdx, setCurrentLyricIdx] = useState(-1);
   const currentLyricIdxRef = useRef(-1);
-  const [showLyricsTab, setShowLyricsTab] = useState(false);
+  const [showLyrics, setShowLyrics] = useState(() => {
+    try { return localStorage.getItem('versior_show_lyrics') !== 'false'; } catch (e) { return true; }
+  });
   const lyricScrollRef = useRef(null);
 
   const parseLyrics = (lrcText) => {
@@ -740,6 +742,20 @@ export default function App() {
                         {getWeatherIcon(weather.condition)}
                       </div>
                     )}
+                    {/* 歌词显示开关 */}
+                    <div className="flex justify-between items-center border-t border-gray-800/50 pt-3 mt-2">
+                      <div><h3 className="text-[13px] text-gray-200 tracking-wider">🎵 歌词显示</h3><p className="text-[10px] text-gray-500 mt-0.5">滚动歌词面板</p></div>
+                      <button
+                        onClick={() => {
+                          const next = !showLyrics;
+                          setShowLyrics(next);
+                          try { localStorage.setItem('versior_show_lyrics', String(next)); } catch (e) {}
+                        }}
+                        className={`w-10 h-5 rounded-full transition-colors relative ${showLyrics ? 'bg-[#2ee4a6]' : 'bg-gray-700'}`}
+                      >
+                        <div className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-transform ${showLyrics ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                      </button>
+                    </div>
                     <button onClick={checkStatus} disabled={backendStatus.checking} className="w-full mt-2 border border-gray-700 text-gray-400 py-2 rounded-lg hover:bg-gray-800 hover:text-white transition-colors text-xs disabled:opacity-50 font-bold">
                       {backendStatus.checking ? '检测中...' : '重新检测'}
                     </button>
@@ -989,7 +1005,7 @@ export default function App() {
             </div>
 
             {/* 歌词滚动板块（播放列表上方） */}
-            {lyrics.length > 0 && (
+            {showLyrics && lyrics.length > 0 && (
               <div className={`border-t ${brd} relative`}>
                 {isDark && <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#2ee4a6]/20 to-transparent" />}
                 <div className={`px-6 py-3 ${isDark ? 'bg-[#0d0d10]' : 'bg-gray-50'} flex items-center gap-2`}>
