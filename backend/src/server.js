@@ -265,13 +265,21 @@ class RadioServer {
                 musicData = await musicService.pickRandomFromLibrary();
                 if (!musicData) throw new Error('搜索失败且歌单中无可用歌曲');
             }
-            // 同名去重
-            if (musicData && this.playHistoryTitles?.some(t => t.title === musicData.title && t.artist === musicData.artist)) {
-                console.log(`⚠️ 同名已播放: ${musicData.title} - ${musicData.artist}`);
-                try {
-                    const nextData = await musicService.searchSong(trackInfo.title, excludeIds.concat(String(musicData.id)));
-                    if (nextData) musicData = nextData;
-                } catch (e) {}
+            // 同名去重（模糊匹配，忽略大小写和空格）
+            if (musicData) {
+                const dupTitle = musicData.title?.trim().toLowerCase();
+                const dupArtist = musicData.artist?.trim().toLowerCase();
+                const duplicate = this.playHistoryTitles?.find(t =>
+                    t.title?.trim().toLowerCase() === dupTitle &&
+                    t.artist?.trim().toLowerCase() === dupArtist
+                );
+                if (duplicate) {
+                    console.log(`⚠️ 同名已播放: ${musicData.title} - ${musicData.artist}，尝试找下一首`);
+                    try {
+                        const nextData = await musicService.searchSong(trackInfo.title, excludeIds.concat(String(musicData.id)));
+                        if (nextData) musicData = nextData;
+                    } catch (e) {}
+                }
             }
 
             const track = {
@@ -315,9 +323,7 @@ class RadioServer {
     // ============================================================
     async processNextTrack(clientIP) {
         if (this.isProcessing) {
-            console.log('正在处理中，加入队列...');
-            // 等当前处理完后自动再处理一次
-            setTimeout(() => this.processNextTrack(clientIP), 1000);
+            console.log('正在处理中，跳过（前端已有防抖）');
             return;
         }
         this.isProcessing = true;
@@ -338,13 +344,21 @@ class RadioServer {
                 musicData = await musicService.pickRandomFromLibrary();
                 if (!musicData) throw new Error('搜索失败且歌单中无可用歌曲');
             }
-            // 同名去重
-            if (musicData && this.playHistoryTitles?.some(t => t.title === musicData.title && t.artist === musicData.artist)) {
-                console.log(`⚠️ 同名已播放: ${musicData.title} - ${musicData.artist}`);
-                try {
-                    const nextData = await musicService.searchSong(trackInfo.title, excludeIds.concat(String(musicData.id)));
-                    if (nextData) musicData = nextData;
-                } catch (e) {}
+            // 同名去重（模糊匹配，忽略大小写和空格）
+            if (musicData) {
+                const dupTitle = musicData.title?.trim().toLowerCase();
+                const dupArtist = musicData.artist?.trim().toLowerCase();
+                const duplicate = this.playHistoryTitles?.find(t =>
+                    t.title?.trim().toLowerCase() === dupTitle &&
+                    t.artist?.trim().toLowerCase() === dupArtist
+                );
+                if (duplicate) {
+                    console.log(`⚠️ 同名已播放: ${musicData.title} - ${musicData.artist}，尝试找下一首`);
+                    try {
+                        const nextData = await musicService.searchSong(trackInfo.title, excludeIds.concat(String(musicData.id)));
+                        if (nextData) musicData = nextData;
+                    } catch (e) {}
+                }
             }
 
             const track = {
