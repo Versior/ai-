@@ -435,12 +435,12 @@ export default function App() {
           setCurrentLyricIdx(idx);
         }
       }
-      // 播放到 80% 后，主动请求预加载下一首（仅用户交互后）
-      if (dur && current / dur > 0.8 && !preloadSentRef.current && userInteractedRef.current) {
+      // 播放到 70% 后，主动请求预加载下一首（仅用户交互后）
+      if (dur && current / dur > 0.7 && !preloadSentRef.current && userInteractedRef.current) {
         preloadSentRef.current = true;
         if (wsRef.current && wsConnected) {
           wsRef.current.send(JSON.stringify({ type: 'command', action: 'preload_next' }));
-          console.log('📤 播放80%，请求预加载下一首');
+          console.log('📤 播放70%，请求预加载下一首');
         }
       }
     }

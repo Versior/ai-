@@ -95,7 +95,7 @@ class RadioServer {
         this.playHistoryTitles = []; // 最近播放的歌名+歌手，用于同名去重
         this.maxHistory = 20;
         this.lastPreloadTime = 0;
-        this.preloadDebounceMs = 30000; // 30秒防抖
+        this.preloadDebounceMs = 60000; // 60秒防抖
     }
 
     start() {
@@ -558,6 +558,11 @@ class RadioServer {
                 lyrics: musicData?.lyrics || '',
             };
             console.log('✅ 预加载完成:', this.preloadedTrack.title);
+
+            // 更新 lastQueue，避免下次切歌重复推荐
+            if (this.preloadedQueue.length > 0) {
+                this.lastQueue = this.preloadedQueue;
+            }
 
             this.broadcast({
                 type: 'preload_ready',
