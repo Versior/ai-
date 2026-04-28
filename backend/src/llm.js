@@ -172,7 +172,7 @@ class LLMService {
         }
         
         return {
-            say: (data.say || "欢迎来到 Versior，听见未来电波...").substring(0, 80),
+            say: this.truncateSay(data.say || "欢迎来到 Versior，听见未来电波..."),
             track: { title: trackTitle, artist: trackArtist },
             queue: queue.slice(0, 5)
         };
@@ -251,7 +251,7 @@ class LLMService {
                 ? this.userTracks[Math.floor(Math.random() * this.userTracks.length)]
                 : null;
             return {
-                say: content.substring(0, 200) || "欢迎来到 Versior，听见未来电波...",
+                say: this.truncateSay(content || "欢迎来到 Versior，听见未来电波..."),
                 track: fallbackTrack 
                     ? { title: fallbackTrack.name, artist: fallbackTrack.artist }
                     : { title: "赛博之梦", artist: "Versior" },
@@ -273,6 +273,19 @@ class LLMService {
         }
     }
 
+    truncateSay(text, maxLen = 80) {
+        if (!text || text.length <= maxLen) return text || '';
+        const truncated = text.substring(0, maxLen);
+        const lastSentence = truncated.match(/[^。！？.!?]*[。！？.!?]/g);
+        if (lastSentence && lastSentence.length > 0) {
+            return lastSentence.join('');
+        }
+        const lastComma = truncated.lastIndexOf('，');
+        if (lastComma > maxLen * 0.5) {
+            return truncated.substring(0, lastComma + 1);
+        }
+        return truncated.replace(/[，。！？.!?]+$/, '') + '...';
+    }
 }
 
 module.exports = new LLMService();

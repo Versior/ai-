@@ -347,6 +347,24 @@ async function buildTrackInfo(song, cookie) {
             hotComment = hotComments[0].content || '';
             if (hotComment.length > 80) hotComment = hotComment.substring(0, 77) + '...';
         }
+        // 没有热评，尝试获取最新评论作为兜底
+        if (!hotComment) {
+            try {
+                const newRes = await axios.get(
+                    `${BASE_URL}/api/v1/resource/comments/R_SO_4_${songId}`,
+                    {
+                        params: { rid: `R_SO_4_${songId}`, offset: 0, total: false, limit: 1, orderType: 1 },
+                        headers: buildHeaders(cookie),
+                        timeout: 5000,
+                    }
+                );
+                const comments = newRes.data?.comments;
+                if (comments?.length > 0) {
+                    hotComment = comments[0].content || '';
+                    if (hotComment.length > 80) hotComment = hotComment.substring(0, 77) + '...';
+                }
+            } catch (e2) {}
+        }
     } catch (e) {}
 
     return {
