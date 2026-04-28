@@ -271,6 +271,7 @@ class RadioServer {
                 url: musicData.url,
                 cover: musicData.cover,
                 hotComment: musicData.hotComment,
+                lyrics: musicData.lyrics || "",
             };
 
             this.currentTrack = track;
@@ -327,6 +328,7 @@ class RadioServer {
                 url: musicData.url,
                 cover: musicData.cover,
                 hotComment: musicData.hotComment,
+                lyrics: musicData.lyrics || "",
             };
 
             this.currentTrack = track;
@@ -384,6 +386,7 @@ class RadioServer {
                 url: musicData?.url || '',
                 cover: musicData?.cover || '',
                 hotComment: musicData?.hotComment || '',
+                lyrics: musicData?.lyrics || '',
             };
             this.preloadedSay = llmResponse.say;
             this.preloadedQueue = llmResponse.queue || [];

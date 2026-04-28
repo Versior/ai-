@@ -317,6 +317,20 @@ async function buildTrackInfo(song, cookie) {
         detail = detailRes.data?.songs?.[0] || song;
     } catch (e) {}
 
+    // 获取歌词
+    let lyrics = '';
+    try {
+        const lyricRes = await axios.get(
+            `${BASE_URL}/api/song/lyric`,
+            {
+                params: { id: songId, lv: 1, kv: 1, tv: -1 },
+                headers: buildHeaders(cookie),
+                timeout: 5000,
+            }
+        );
+        lyrics = lyricRes.data?.lrc?.lyric || '';
+    } catch (e) {}
+
     // 获取热评
     let hotComment = '';
     try {
@@ -342,6 +356,7 @@ async function buildTrackInfo(song, cookie) {
         url: songUrl,
         cover: detail.al?.picUrl || song.al?.picUrl || '',
         hotComment,
+        lyrics,
     };
 }
 

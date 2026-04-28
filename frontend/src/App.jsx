@@ -9,7 +9,7 @@ import IntroModal from './components/IntroModal';
 
 const API_BASE = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-const APP_VERSION = '1.2.4';
+const APP_VERSION = '1.3.0';
 
 export default function App() {
   const [theme, setTheme] = useState('light');
@@ -191,13 +191,21 @@ export default function App() {
             const data = JSON.parse(event.data);
             if (data.type === 'dj_broadcast') {
               if (data.say) setSystemMessage(data.say);
-              if (data.track) doPlayTrack(data.track);
+              if (data.track) {
+                doPlayTrack(data.track);
+                setLyrics(parseLyrics(data.track.lyrics || ''));
+                setCurrentLyricIdx(-1);
+              }
               setQueue(Array.isArray(data.queue) ? data.queue : []);
               if (data.weather) { console.log('🌤️ 收到天气:', JSON.stringify(data.weather)); setWeather(data.weather); }
             } else if (data.type === 'dj_response') {
               if (data.say) setSystemMessage(data.say);
               setQueue(Array.isArray(data.queue) ? data.queue : []);
-              if (data.track) doPlayTrack(data.track);
+              if (data.track) {
+                doPlayTrack(data.track);
+                setLyrics(parseLyrics(data.track.lyrics || ''));
+                setCurrentLyricIdx(-1);
+              }
               if (data.weather) { console.log('🌤️ 收到天气:', JSON.stringify(data.weather)); setWeather(data.weather); }
             } else if (data.type === 'weather_update') {
               setWeather(data.weather);
@@ -227,6 +235,40 @@ export default function App() {
     return () => { clearTimeout(reconnectTimer); if (pingInterval) clearInterval(pingInterval); if (ws && ws.readyState === 1) ws.close(); };
   }, []);
 
+  // 歌词自动滚动
+  useEffect(() => {
+    if (!showLyricsTab || currentLyricIdx < 0 || !lyricScrollRef.current) return;
+    const container = lyricScrollRef.current;
+    const lineHeight = 28; // py-1 + text-xs ≈ 28px
+    const targetScroll = currentLyricIdx * lineHeight - container.clientHeight / 2 + lineHeight / 2;
+    container.scrollTo({ top: Math.max(0, targetScroll), behavior: 'smooth' });
+  }, [currentLyricIdx, showLyricsTab]);
+
+  // === 歌词 ===
+  const [lyrics, setLyrics] = useState([]); // [{time, text}]
+  const [currentLyricIdx, setCurrentLyricIdx] = useState(-1);
+  const [showLyricsTab, setShowLyricsTab] = useState(false);
+  const lyricScrollRef = useRef(null);
+
+  const parseLyrics = (lrcText) => {
+    if (!lrcText) return [];
+    const lines = lrcText.split('\n');
+    const parsed = [];
+    const timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/;
+    for (const line of lines) {
+      const match = line.match(timeReg);
+      if (match) {
+        const min = parseInt(match[1]);
+        const sec = parseInt(match[2]);
+        const ms = parseInt(match[3]);
+        const time = min * 60 + sec + ms / 1000;
+        const text = line.replace(timeReg, '').trim();
+        if (text) parsed.push({ time, text });
+      }
+    }
+    return parsed;
+  };
+
   // === 播放核心 ===
   const userInteractedRef = useRef(false);
 
@@ -254,6 +296,8 @@ export default function App() {
     userInteractedRef.current = true;
     if (track.url) {
       doPlayTrack(track, true);
+      setLyrics(parseLyrics(track.lyrics || ''));
+      setCurrentLyricIdx(-1);
       setSystemMessage('正在生成推荐...');
       try {
         const res = await fetch(API_BASE + '/api/ai-summary?title=' + encodeURIComponent(track.title) + '&artist=' + encodeURIComponent(track.artist || ''));
@@ -269,6 +313,8 @@ export default function App() {
       const data = await res.json();
       if (data.success && data.track && data.track.url) {
         doPlayTrack(data.track, true);
+        setLyrics(parseLyrics(data.track.lyrics || ''));
+        setCurrentLyricIdx(-1);
         setSystemMessage('正在生成推荐...');
         try {
           const aiRes = await fetch(API_BASE + '/api/ai-summary?title=' + encodeURIComponent(data.track.title) + '&artist=' + encodeURIComponent(data.track.artist || ''));
@@ -337,6 +383,15 @@ export default function App() {
       // 核心修复：只有在没拖拽进度条时，才允许音频更新 UI，防止冲突弹回！
       if (dur && !isDraggingRef.current) {
         setProgress((current / dur) * 100);
+      }
+      // 歌词同步
+      if (lyrics.length > 0) {
+        let idx = -1;
+        for (let i = 0; i < lyrics.length; i++) {
+          if (current >= lyrics[i].time) idx = i;
+          else break;
+        }
+        if (idx !== currentLyricIdx) setCurrentLyricIdx(idx);
       }
       // 播放到 80% 后，主动请求预加载下一首
       if (dur && current / dur > 0.8 && !preloadSentRef.current) {
@@ -577,6 +632,8 @@ export default function App() {
         input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #2ee4a6; cursor: grab; border: 3px solid #111116; box-shadow: 0 0 8px rgba(46,228,166,0.5); }
         input[type="range"]::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.2); }
         input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #2ee4a6; cursor: grab; border: 3px solid #111116; box-shadow: 0 0 8px rgba(46,228,166,0.5); }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
       <audio ref={audioRef} onTimeUpdate={onTimeUpdate} onEnded={onTrackEnd} onLoadedMetadata={() => { if (audioRef.current) { setDuration(audioRef.current.duration); } }} onError={handleAudioError} preload="none" />
@@ -887,32 +944,64 @@ export default function App() {
                 <span>{queue.length} 首曲目 {preloadStatus === 'ready' ? '· ✓ 已就绪' : ''}</span>
               </div>
               <div className="flex flex-col">
-                {queue.map((track, idx) => {
+                {queue.slice(0, 3).map((track, idx) => {
                   const isActive = currentTrack.title === track.title || track.active;
                   const isSearching = searchingTrack === track.title;
                   return (
-                    <div key={idx} onClick={() => !isSearching && handleQueueClick(track)} className={`flex items-center justify-between px-6 py-2.5 text-xs border-l-[3px] ${isActive ? 'border-[#2ee4a6] bg-[#2ee4a6]/5' : 'border-transparent hover:bg-gray-800/30'} ${isSearching ? 'opacity-50' : 'cursor-pointer'} transition-colors`}>
-                      <div className="flex items-center gap-4">
-                        {isActive ? <Play className="w-3 h-3 text-[#2ee4a6] fill-current" /> : <span className="text-gray-600 font-mono w-3 text-right">{idx + 1}</span>}
-                        <span className={isActive ? 'text-gray-200 font-medium' : 'text-gray-400'}>{track.title}</span>
+                    <div key={idx} onClick={() => !isSearching && handleQueueClick(track)} className={`px-6 py-3 border-l-[3px] ${isActive ? 'border-[#2ee4a6] bg-[#2ee4a6]/5' : 'border-transparent hover:bg-gray-800/30'} ${isSearching ? 'opacity-50' : 'cursor-pointer'} transition-colors`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-3">
+                          {isActive ? <Play className="w-3 h-3 text-[#2ee4a6] fill-current" /> : <span className="text-gray-600 font-mono w-3 text-right text-[10px]">{idx + 1}</span>}
+                          <span className={`text-xs ${isActive ? `${t1} font-medium` : 'text-gray-400'}`}>{track.title}</span>
+                        </div>
+                        <span className={`text-[10px] ${isActive ? 'text-[#2ee4a6]/80' : 'text-gray-600'}`}>{isSearching ? '搜索中...' : track.artist}</span>
                       </div>
-                      <span className={`text-[10px] ${isActive ? 'text-[#2ee4a6]/80' : 'text-gray-600'}`}>{isSearching ? '搜索中...' : track.artist}</span>
+                      {track.hotComment && (
+                        <p className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400'} leading-relaxed pl-6 line-clamp-2`}>💬 {track.hotComment}</p>
+                      )}
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            {/* 热评区域 */}
-            {currentTrack.hotComment && (
-              <div className={`px-6 py-4 ${isDark ? 'bg-[#0d0d10]' : 'bg-gray-50'} border-t ${brd} relative`}>
-                {isDark && <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#2ee4a6]/20 to-transparent" />}
-                <div className="flex items-center gap-2 mb-2">
-                  <span className={`text-[10px] ${isDark ? 'text-[#2ee4a6]/70' : 'text-gray-500'} tracking-[0.2em] uppercase font-mono`}>💬 hot_comment</span>
-                </div>
-                <p className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-700'} leading-relaxed ${isDark ? 'font-light' : ''}`}>{currentTrack.hotComment}</p>
+            {/* 热评 + 歌词 */}
+            <div className={`border-t ${brd} relative`}>
+              {isDark && <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#2ee4a6]/20 to-transparent" />}
+              {/* Tab 切换 */}
+              <div className="flex gap-1 px-6 pt-3 pb-0">
+                {currentTrack.hotComment && (
+                  <button onClick={() => setShowLyricsTab(false)} className={`text-[10px] px-3 py-1 rounded-full uppercase tracking-wider font-mono transition-colors ${!showLyricsTab ? (isDark ? 'bg-[#2ee4a6]/10 text-[#2ee4a6]' : 'bg-gray-200 text-gray-700') : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600')}`}>💬 热评</button>
+                )}
+                {lyrics.length > 0 && (
+                  <button onClick={() => setShowLyricsTab(true)} className={`text-[10px] px-3 py-1 rounded-full uppercase tracking-wider font-mono transition-colors ${showLyricsTab ? (isDark ? 'bg-[#2ee4a6]/10 text-[#2ee4a6]' : 'bg-gray-200 text-gray-700') : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600')}`}>🎵 歌词</button>
+                )}
               </div>
-            )}
+              {/* 热评内容 */}
+              {!showLyricsTab && currentTrack.hotComment && (
+                <div className={`px-6 py-4 ${isDark ? 'bg-[#0d0d10]' : 'bg-gray-50'}`}>
+                  <p className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-700'} leading-relaxed`}>{currentTrack.hotComment}</p>
+                </div>
+              )}
+              {/* 歌词滚动 */}
+              {showLyricsTab && lyrics.length > 0 && (
+                <div className={`px-6 py-4 ${isDark ? 'bg-[#0d0d10]' : 'bg-gray-50'} overflow-hidden`}>
+                  <div className="relative h-32 overflow-y-auto scrollbar-hide" ref={lyricScrollRef}>
+                    <div className="py-12">
+                      {lyrics.map((line, i) => (
+                        <p key={i} className={`text-xs py-1 transition-all duration-300 ${i === currentLyricIdx ? (isDark ? 'text-[#2ee4a6] font-medium text-sm' : 'text-[#2ee4a6] font-medium text-sm') : (isDark ? 'text-gray-500' : 'text-gray-400')}`}>{line.text}</p>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* 无内容 */}
+              {!currentTrack.hotComment && lyrics.length === 0 && (
+                <div className={`px-6 py-4 ${isDark ? 'bg-[#0d0d10]' : 'bg-gray-50'}`}>
+                  <p className={`text-xs ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>暂无热评与歌词</p>
+                </div>
+              )}
+            </div>
 
             {/* AI 交互 */}
             <div className={`p-6 ${isDark ? 'bg-[#111116]' : 'bg-white'} border-t ${brd}`}>
