@@ -231,7 +231,8 @@ class RadioServer {
                 if (data.action === 'next_track') {
                     await this.processNextTrack(clientIP);
                 } else if (data.action === 'preload_next') {
-                    await this.preloadNextTrack(clientIP);
+                    // 预加载已关闭，避免循环触发问题
+                    console.log('⏭️ 预加载已关闭');
                 }
                 break;
             default:

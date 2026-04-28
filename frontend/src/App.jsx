@@ -435,14 +435,14 @@ export default function App() {
           setCurrentLyricIdx(idx);
         }
       }
-      // 播放到 70% 后，主动请求预加载下一首（仅用户交互后）
-      if (dur && current / dur > 0.7 && !preloadSentRef.current && userInteractedRef.current) {
-        preloadSentRef.current = true;
-        if (wsRef.current && wsConnected) {
-          wsRef.current.send(JSON.stringify({ type: 'command', action: 'preload_next' }));
-          console.log('📤 播放70%，请求预加载下一首');
-        }
-      }
+      // 预加载已关闭，避免循环触发问题
+      // if (dur && current / dur > 0.7 && !preloadSentRef.current && userInteractedRef.current) {
+      //   preloadSentRef.current = true;
+      //   if (wsRef.current && wsConnected) {
+      //     wsRef.current.send(JSON.stringify({ type: 'command', action: 'preload_next' }));
+      //     console.log('📤 播放70%，请求预加载下一首');
+      //   }
+      // }
     }
   };
 
@@ -506,15 +506,7 @@ export default function App() {
       setQueue(preloadedQueueRef.current);
       preloadedSayRef.current = '';
       preloadedQueueRef.current = [];
-      // 切歌后立即预加载下一首
-      preloadSentRef.current = false;
-      setTimeout(() => {
-        if (wsRef.current && wsConnected) {
-          wsRef.current.send(JSON.stringify({ type: 'command', action: 'preload_next' }));
-          preloadSentRef.current = true;
-          console.log('📤 切歌后预加载下一首');
-        }
-      }, 1000);
+      // 切歌后不触发预加载，避免循环问题
       return;
     }
     // 没有预加载，走原来的流程
